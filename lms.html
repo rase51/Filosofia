@@ -1,0 +1,2289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LMS - Fishub</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary: #10b981;
+            --accent: #8b5cf6;
+            --accent-pink: #ec4899;
+            --background: #0a1628;
+            --background-alt: #1a2d4a;
+            --surface: #1e293b;
+            --surface-alt: #0f172a;
+            --text: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: rgba(59, 130, 246, 0.2);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --white: #ffffff;
+            --bg-tertiary: #1e293b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--background) 0%, var(--background-alt) 50%, var(--surface-alt) 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text);
+        }
+
+        .lms-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header mejorado */
+        .lms-header {
+            background: linear-gradient(145deg, var(--surface) 0%, var(--surface-alt) 100%);
+            padding: 24px 32px;
+            border-radius: 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .back-btn {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid var(--border);
+            padding: 12px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            color: var(--primary);
+            transition: all 0.3s;
+        }
+
+        .back-btn:hover {
+            background: rgba(59, 130, 246, 0.2);
+            transform: translateX(-4px);
+        }
+
+        .group-info h1 {
+            font-size: 26px;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .group-info p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .creator-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, var(--warning), #f97316);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--surface);
+            color: var(--text);
+            border: 2px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--error), #b91c1c);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Nueva navegacion por tabs */
+        .tabs-navigation {
+            background: linear-gradient(145deg, var(--surface) 0%, var(--surface-alt) 100%);
+            border-radius: 16px;
+            padding: 8px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            border: 1px solid var(--border);
+        }
+
+        .tab-btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-secondary);
+            background: transparent;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--text);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .tab-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Contenido de tabs */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Layout principal mejorado */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 24px;
+        }
+
+        .main-area {
+            min-width: 0;
+        }
+
+        /* Cards mejoradas */
+        .card {
+            background: linear-gradient(145deg, var(--surface) 0%, var(--surface-alt) 100%);
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            margin-bottom: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .card-title svg {
+            color: var(--primary);
+        }
+
+        /* Tabla de horarios */
+        .schedule-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .schedule-table th {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.1));
+            padding: 16px;
+            text-align: left;
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .schedule-table th:first-child {
+            border-radius: 12px 0 0 12px;
+        }
+
+        .schedule-table th:last-child {
+            border-radius: 0 12px 12px 0;
+        }
+
+        .schedule-table td {
+            padding: 18px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 15px;
+            color: var(--text);
+        }
+
+        .schedule-table tr:hover td {
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .day-cell {
+            font-weight: 700;
+            color: var(--primary);
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 8px;
+            padding: 8px 12px !important;
+            display: inline-block;
+        }
+
+        /* Grid de materiales mejorado */
+        .materials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .material-card {
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            transition: all 0.3s;
+            background: var(--surface-alt);
+        }
+
+        .material-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
+        }
+
+        .material-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+
+        .material-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .icon-pdf { background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.1)); color: #ef4444; }
+        .icon-video { background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.1)); color: #3b82f6; }
+        .icon-doc { background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1)); color: #10b981; }
+        .icon-link { background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(139, 92, 246, 0.1)); color: #8b5cf6; }
+        .icon-default { background: linear-gradient(135deg, rgba(100, 116, 139, 0.2), rgba(100, 116, 139, 0.1)); color: #64748b; }
+
+        .material-info {
+            flex: 1;
+        }
+
+        .material-title {
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 4px;
+            font-size: 15px;
+        }
+
+        .material-type {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .material-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .btn-material {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-download-material {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+        }
+
+        .btn-download-material:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-delete-material {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-delete-material:hover {
+            background: var(--error);
+            color: white;
+        }
+
+        /* Formularios */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text);
+            font-size: 14px;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 15px;
+            transition: all 0.3s;
+            background: var(--surface-alt);
+            color: var(--text);
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+        }
+
+        .form-input::placeholder, .form-textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Progreso */
+        .progress-section {
+            background: linear-gradient(145deg, var(--surface) 0%, var(--surface-alt) 100%);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .progress-title {
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .progress-percentage {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .progress-bar-container {
+            height: 12px;
+            background: var(--surface-alt);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            border-radius: 6px;
+            transition: width 0.5s ease;
+        }
+
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--surface-alt);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid var(--border);
+        }
+
+        .task-item:hover {
+            border-color: var(--primary);
+        }
+
+        .task-item.completed {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .task-checkbox {
+            width: 22px;
+            height: 22px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+
+        .task-item.completed .task-checkbox {
+            background: linear-gradient(135deg, var(--success), #059669);
+            border-color: var(--success);
+        }
+
+        .task-text {
+            font-size: 14px;
+            color: var(--text);
+        }
+
+        .task-item.completed .task-text {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+
+        /* Participantes */
+        .participants-section {
+            background: linear-gradient(145deg, var(--surface) 0%, var(--surface-alt) 100%);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+        }
+
+        .participants-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .participants-title {
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .participants-count {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--primary);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .participant-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--surface-alt);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border);
+        }
+
+        .participant-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .participant-info {
+            flex: 1;
+        }
+
+        .participant-name {
+            font-weight: 600;
+            color: var(--text);
+            font-size: 14px;
+        }
+
+        .participant-role {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .role-badge {
+            background: linear-gradient(135deg, var(--warning), #f97316);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .btn-view-all {
+            width: 100%;
+            padding: 12px;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--primary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-view-all:hover {
+            background: rgba(59, 130, 246, 0.2);
+        }
+
+        /* Anuncios */
+        .announcement-card {
+            padding: 20px;
+            border-left: 4px solid var(--primary);
+            background: var(--surface-alt);
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+
+        .announcement-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .announcement-title {
+            font-weight: 700;
+            color: var(--text);
+            font-size: 16px;
+        }
+
+        .announcement-date {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .announcement-content {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* Modales */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: linear-gradient(145deg, var(--surface) 0%, var(--surface-alt) 100%);
+            border-radius: 24px;
+            padding: 32px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-title {
+            font-size: 22px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.3s;
+        }
+
+        .btn-close:hover {
+            color: var(--error);
+        }
+
+        /* Upload area */
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--surface-alt);
+            margin-bottom: 15px;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--primary);
+            background: rgba(59, 130, 246, 0.15);
+        }
+
+        .file-selected {
+            padding: 12px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 10px;
+            color: var(--success);
+            font-size: 14px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .file-selected.active {
+            display: block;
+        }
+
+        /* Progress upload */
+        .progress-upload {
+            display: none;
+            margin-top: 15px;
+        }
+
+        .progress-upload.active {
+            display: block;
+        }
+
+        .progress-bar-upload {
+            height: 8px;
+            background: var(--surface-alt);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill-upload {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text-upload {
+            margin-top: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 16px 24px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 500;
+            z-index: 2000;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            background: linear-gradient(135deg, var(--success), #059669);
+        }
+
+        .toast.error {
+            background: linear-gradient(135deg, var(--error), #dc2626);
+        }
+
+        /* Horario botones */
+        .horario-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .btn-link-clase {
+            padding: 8px 14px;
+            background: linear-gradient(135deg, var(--success), #059669);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .btn-link-clase:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-delete-horario {
+            padding: 8px 14px;
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-delete-horario:hover {
+            background: var(--error);
+            color: white;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state svg {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 15px;
+            color: var(--text-muted);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+
+            .progress-section, .participants-section {
+                flex: 1;
+                min-width: 280px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .lms-header {
+                padding: 16px;
+            }
+
+            .tabs-navigation {
+                padding: 6px;
+            }
+
+            .tab-btn {
+                padding: 10px 16px;
+                font-size: 13px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .materials-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="lms-container">
+        <!-- Header -->
+        <div class="lms-header">
+            <div class="header-left">
+                <button class="back-btn" onclick="volverInicio()">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    Volver
+                </button>
+                <div class="group-info">
+                    <h1 id="groupName">Cargando...</h1>
+                    <p id="groupProf">Cargando informacion...</p>
+                </div>
+            </div>
+            <div class="header-right" id="headerActions"></div>
+        </div>
+
+        <!-- Nueva navegacion por tabs -->
+        <div class="tabs-navigation">
+            <button class="tab-btn active" onclick="cambiarTab('horarios')">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <span>Horarios</span>
+            </button>
+            <button class="tab-btn" onclick="cambiarTab('materiales')">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                </svg>
+                <span>Materiales</span>
+            </button>
+            <button class="tab-btn" onclick="cambiarTab('anuncios')">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
+                </svg>
+                <span>Anuncios</span>
+            </button>
+        </div>
+
+        <!-- Layout principal con sidebar -->
+        <div class="main-layout">
+            <div class="main-area">
+                <!-- Tab Horarios -->
+                <div class="tab-content active" id="tab-horarios">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                                Horario de Sesiones
+                            </h2>
+                            <div id="horarioActions"></div>
+                        </div>
+                        <table class="schedule-table">
+                            <thead>
+                                <tr>
+                                    <th>Dia</th>
+                                    <th>Horario</th>
+                                    <th>Ubicacion</th>
+                                    <th>Tema</th>
+                                    <th id="horarioAccionesHeader" style="display:none;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="scheduleBody">
+                                <tr><td colspan="5"><div class="loading"><div class="spinner"></div></div></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tab Materiales -->
+                <div class="tab-content" id="tab-materiales">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                </svg>
+                                Materiales del Curso
+                            </h2>
+                            <div id="materialesActions"></div>
+                        </div>
+                        <div id="materialsContainer" class="materials-grid">
+                            <div class="loading"><div class="spinner"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Anuncios -->
+                <div class="tab-content" id="tab-anuncios">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
+                                </svg>
+                                Anuncios
+                            </h2>
+                            <div id="anunciosActions"></div>
+                        </div>
+                        <div id="announcementsContainer">
+                            <div class="loading"><div class="spinner"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar siempre visible -->
+            <div class="sidebar">
+                <!-- Progreso -->
+                <div class="progress-section">
+                    <div class="progress-header">
+                        <h3 class="progress-title">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                            Progreso
+                        </h3>
+                        <div id="progresoActions"></div>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" id="progressBar"></div>
+                    </div>
+                    <div class="progress-percentage" id="progressPercent">0%</div>
+                    <div class="task-list" id="progressItems"></div>
+                    <div class="stat-grid" style="margin-top: 16px;">
+                        <div class="stat-item">
+                            <div class="stat-value" id="completedTasks">0</div>
+                            <div class="stat-label">Completados</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="totalMaterials">0</div>
+                            <div class="stat-label">Materiales</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Participantes -->
+                <div class="participants-section">
+                    <div class="participants-header">
+                        <h3 class="participants-title">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            Participantes
+                        </h3>
+                        <span class="participants-count" id="participantCount">0</span>
+                    </div>
+                    <div class="participants-list" id="participantsList">
+                        <div class="loading"><div class="spinner"></div></div>
+                    </div>
+                    <!-- Boton para ver todos los participantes -->
+                    <button class="btn-view-all" id="btnVerTodos" style="display:none;" onclick="abrirModalParticipantes()">
+                        Ver todos
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Agregar Material -->
+    <div class="modal-overlay" id="materialModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Agregar Material</h2>
+                <button type="button" class="btn-close" onclick="cerrarModalMaterial()">&times;</button>
+            </div>
+            <form id="materialForm">
+                <div class="form-group">
+                    <label>Nombre del Material *</label>
+                    <input type="text" id="materialNombre" class="form-input" placeholder="Ej: Guia de Ejercicios" required>
+                </div>
+                <div class="form-group">
+                    <label>Tipo *</label>
+                    <select id="materialTipo" class="form-input" required>
+                        <option value="pdf">PDF</option>
+                        <option value="video">Video</option>
+                        <option value="doc">Documento</option>
+                        <option value="link">Enlace</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Archivo o Enlace</label>
+                    <div class="upload-area" id="fileUploadArea">
+                        <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 16v-6a2 2 0 012-2h.586a2 2 0 001.414-.586l.707-.707a2 2 0 00-.586-1.414l-.177-.177a2 2 0 00-1.414-.586H9a2 2 0 00-2 2v6a2 2 0 012 2h2a2 2 0 002-2z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M7 20h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"/>
+                        </svg>
+                        <p class="file-upload-text">
+                            <strong>Arrastra</strong> el archivo aquí o haz clic para seleccionar
+                        </p>
+                        <p style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">
+                            Archivos soportados: PDF, DOC, MP4, MOV. Tamaño max: 50MB
+                        </p>
+                    </div>
+                    <input type="file" id="materialFile" style="display: none;">
+                    <div id="fileSelected" class="file-selected"></div>
+                </div>
+                <div class="or-separator">
+                    <span>o</span>
+                </div>
+                <div class="form-group">
+                    <label>Ingresa una URL</label>
+                    <input type="url" id="materialUrl" class="form-input" placeholder="https://...">
+                </div>
+                
+                <!-- Barra de progreso para subida de archivos -->
+                <div id="uploadProgressContainer" class="progress-upload">
+                    <div class="progress-bar-upload">
+                        <div id="uploadProgressBar" class="progress-fill-upload"></div>
+                    </div>
+                    <div class="progress-text-upload">
+                        <span id="uploadStatusText">Preparando...</span> - <span id="uploadPercentText">0%</span>
+                    </div>
+                </div>
+
+                <p id="materialValidationMsg" style="color: var(--error); font-size: 13px; display: none; margin-top: -10px; margin-bottom: 10px;"></p>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" onclick="cerrarModalMaterial()">Cancelar</button>
+                    <button type="submit" class="btn-confirm">Agregar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Agregar Progreso -->
+    <div class="modal-overlay" id="progresoModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Agregar Tarea de Progreso</h2>
+                <button type="button" class="btn-close" onclick="cerrarModalProgreso()">&times;</button>
+            </div>
+            <form id="progresoForm">
+                <div class="form-group">
+                    <label>Titulo de la Tarea *</label>
+                    <input type="text" id="progresoTitulo" class="form-input" placeholder="Ej: Completar Capitulo 1" required>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" onclick="cerrarModalProgreso()">Cancelar</button>
+                    <button type="submit" class="btn-confirm">Agregar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Agregar Horario -->
+    <div class="modal-overlay" id="horarioModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Agregar Horario</h2>
+                <button type="button" class="btn-close" onclick="cerrarModalHorario()">&times;</button>
+            </div>
+            <form id="horarioForm">
+                <div class="form-group">
+                    <label>Dia *</label>
+                    <select id="horarioDia" class="form-input" required>
+                        <option value="Lunes">Lunes</option>
+                        <option value="Martes">Martes</option>
+                        <option value="Miercoles">Miercoles</option>
+                        <option value="Jueves">Jueves</option>
+                        <option value="Viernes">Viernes</option>
+                        <option value="Sabado">Sabado</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Hora Inicio *</label>
+                    <input type="time" id="horarioInicio" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label>Hora Fin *</label>
+                    <input type="time" id="horarioFin" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label>Ubicacion</label>
+                    <input type="text" id="horarioUbicacion" class="form-input" placeholder="Ej: Aula 301">
+                </div>
+                <div class="form-group">
+                    <label>Tema</label>
+                    <input type="text" id="horarioTema" class="form-input" placeholder="Ej: Integrales">
+                </div>
+                <!-- Campo para link de clase virtual -->
+                <div class="form-group">
+                    <label>Link de Clase Virtual (opcional)</label>
+                    <input type="url" id="horarioLinkClase" class="form-input" placeholder="Ej: https://meet.google.com/xxx-xxxx-xxx">
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" onclick="cerrarModalHorario()">Cancelar</button>
+                    <button type="submit" class="btn-confirm">Agregar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Agregar Anuncio -->
+    <div class="modal-overlay" id="anuncioModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Agregar Anuncio</h2>
+                <button type="button" class="btn-close" onclick="cerrarModalAnuncio()">&times;</button>
+            </div>
+            <form id="anuncioForm">
+                <div class="form-group">
+                    <label>Titulo *</label>
+                    <input type="text" id="anuncioTitulo" class="form-input" placeholder="Titulo del anuncio" required>
+                </div>
+                <div class="form-group">
+                    <label>Contenido *</label>
+                    <textarea id="anuncioContenido" class="form-textarea" rows="4" placeholder="Escribe el anuncio..." required></textarea>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" onclick="cerrarModalAnuncio()">Cancelar</button>
+                    <button type="submit" class="btn-confirm">Publicar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para ver todos los participantes -->
+    <div class="modal-overlay" id="participantesModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Todos los Participantes</h2>
+                <button type="button" class="btn-close" onclick="cerrarModalParticipantes()">&times;</button>
+            </div>
+            <div class="modal-participantes-list" id="modalParticipantesList">
+            </div>
+            <div class="modal-buttons">
+                <button type="button" class="btn-cancel" onclick="cerrarModalParticipantes()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Configuracion Supabase
+        const SUPABASE_URL = 'https://cuanxvisilnzqkwatgou.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1YW54dmlzaWxuenFrd2F0Z291Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwOTQ0MDEsImV4cCI6MjA3OTY3MDQwMX0.EkoyQjv6tgPG_eJER4MS7gjvKju_sl6YiS-lvzkTqhY';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Estado
+        let currentGroup = null;
+        let currentUser = null;
+        let esCreador = false;
+        let materiales = [];
+        let horarios = [];
+        let progreso = [];
+        let anuncios = [];
+        let participantes = [];
+        let selectedFile = null;
+
+        // Obtener ID del grupo
+        const urlParams = new URLSearchParams(window.location.search);
+        const groupId = urlParams.get('groupId');
+
+        // Inicializacion
+        document.addEventListener('DOMContentLoaded', async () => {
+            currentUser = JSON.parse(localStorage.getItem('fishub_user'));
+            
+            if (!groupId) {
+                alert('No se especifico un grupo');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            await cargarGrupo();
+            initForms();
+            initFileUpload();
+        });
+
+        function cambiarTab(tabName) {
+            // Quitar active de todos los tabs
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Activar tab seleccionado
+            document.querySelector(`[onclick="cambiarTab('${tabName}')"]`).classList.add('active');
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+        }
+
+        // Cargar grupo
+        async function cargarGrupo() {
+            try {
+                const { data, error } = await supabase
+                    .from('grupos')
+                    .select(`*, miembros_grupo(usuario_id)`)
+                    .eq('id', groupId)
+                    .single();
+
+                if (error || !data) {
+                    alert('Grupo no encontrado');
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                currentGroup = data;
+                esCreador = currentUser && data.creator_id === currentUser.id;
+                
+                if (esCreador) {
+                    document.getElementById('horarioAccionesHeader').style.display = 'table-cell';
+                }
+                
+                renderGrupoInfo();
+                await Promise.all([
+                    cargarHorarios(),
+                    cargarMateriales(),
+                    cargarProgreso(),
+                    cargarAnuncios(),
+                    cargarParticipantes()
+                ]);
+
+            } catch (err) {
+                console.error('Error:', err);
+                showToast('Error al cargar el grupo', 'error');
+            }
+        }
+
+        // Renderizar info del grupo
+        function renderGrupoInfo() {
+            document.getElementById('groupName').innerHTML = currentGroup.nombre + 
+                (esCreador ? '<span class="creator-badge">Creador</span>' : '');
+            document.getElementById('groupProf').textContent = currentGroup.profesor || 'Grupo de estudio';
+            document.title = `${currentGroup.nombre} - LMS Fishub`;
+
+            // Botones del header
+            const headerActions = document.getElementById('headerActions');
+            headerActions.innerHTML = `
+                <button class="btn btn-secondary" onclick="compartirGrupo()">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684y0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                    </svg>
+                    Compartir
+                </button>
+                ${!esCreador ? `<button class="btn btn-danger" onclick="salirDelGrupo()">Salir del Grupo</button>` : ''}
+            `;
+
+            // Botones de acciones para creador
+            if (esCreador) {
+                document.getElementById('horarioActions').innerHTML = `
+                    <button class="btn btn-primary" onclick="abrirModalHorario()">+ Agregar</button>
+                `;
+                document.getElementById('materialesActions').innerHTML = `
+                    <button class="btn btn-primary" onclick="abrirModalMaterial()">+ Subir Material</button>
+                `;
+                document.getElementById('anunciosActions').innerHTML = `
+                    <button class="btn btn-primary" onclick="abrirModalAnuncio()">+ Agregar</button>
+                `;
+                document.getElementById('progresoActions').innerHTML = `
+                    <button class="btn btn-primary" onclick="abrirModalProgreso()">+ Agregar</button>
+                `;
+            }
+        }
+
+        async function cargarParticipantes() {
+            try {
+                const { data, error } = await supabase
+                    .from('miembros_grupo')
+                    .select(`
+                        usuario_id,
+                        usuarios (id, nombre, email, semestre)
+                    `)
+                    .eq('grupo_id', groupId);
+
+                if (error) throw error;
+
+                participantes = data || [];
+                document.getElementById('participantCount').textContent = participantes.length;
+                renderParticipantes();
+
+            } catch (err) {
+                console.error('Error cargando participantes:', err);
+                renderParticipantesFallback();
+            }
+        }
+
+        function sanitizarNombreArchivo(nombre) {
+            return nombre
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '') // Quitar acentos
+                .replace(/[^a-zA-Z0-9._-]/g, '_') // Reemplazar caracteres especiales por _
+                .replace(/_+/g, '_') // Quitar guiones bajos multiples
+                .substring(0, 100); // Limitar longitud
+        }
+
+        function renderParticipantes() {
+            const container = document.getElementById('participantsList');
+            const btnVerTodos = document.getElementById('btnVerTodos');
+            
+            if (participantes.length === 0) {
+                renderParticipantesFallback();
+                btnVerTodos.style.display = 'none';
+                return;
+            }
+
+            const mostrar = participantes.slice(0, 5);
+            
+            container.innerHTML = mostrar.map((p) => {
+                const usuario = p.usuarios;
+                if (!usuario) return '';
+                
+                const esCreadorUsuario = currentGroup.creator_id === usuario.id;
+                const esTu = currentUser && currentUser.id === usuario.id;
+                
+                return `
+                    <div class="participant-item">
+                        <div class="participant-avatar">${usuario.nombre.charAt(0).toUpperCase()}</div>
+                        <div class="participant-info">
+                            <span class="participant-name">
+                                ${usuario.nombre}
+                                ${esTu ? ' (Tu)' : ''}
+                                ${esCreadorUsuario ? ' <span class="role-badge">Creador</span>' : ''}
+                            </span>
+                            <span class="participant-role">${usuario.semestre}° Semestre</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            if (participantes.length > 5) {
+                btnVerTodos.style.display = 'block';
+                btnVerTodos.textContent = `Ver todos (${participantes.length})`;
+            } else {
+                btnVerTodos.style.display = 'none';
+            }
+        }
+
+        function abrirModalParticipantes() {
+            const modal = document.getElementById('participantesModal');
+            const container = document.getElementById('modalParticipantesList');
+            
+            container.innerHTML = participantes.map((p) => {
+                const usuario = p.usuarios;
+                if (!usuario) return '';
+                
+                const esCreadorUsuario = currentGroup.creator_id === usuario.id;
+                const esTu = currentUser && currentUser.id === usuario.id;
+                
+                return `
+                    <div class="participant-item">
+                        <div class="participant-avatar">${usuario.nombre.charAt(0).toUpperCase()}</div>
+                        <div class="participant-info">
+                            <span class="participant-name">
+                                ${usuario.nombre}
+                                ${esTu ? ' (Tu)' : ''}
+                                ${esCreadorUsuario ? ' <span class="role-badge">Creador</span>' : ''}
+                            </span>
+                            <span class="participant-role">${usuario.semestre}° Semestre</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            modal.classList.add('active');
+        }
+
+        function cerrarModalParticipantes() {
+            document.getElementById('participantesModal').classList.remove('active');
+        }
+
+        function renderParticipantesFallback() {
+            const container = document.getElementById('participantsList');
+            
+            let html = '';
+            if (currentUser) {
+                html += `
+                    <div class="participant-item">
+                        <div class="participant-avatar">${currentUser.nombre.charAt(0).toUpperCase()}</div>
+                        <div class="participant-info">
+                            <span class="participant-name">${currentUser.nombre} (Tu)</span>
+                            <span class="participant-role">${currentUser.semestre || 1}° Semestre</span>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            const count = currentGroup.participantes || 0;
+            if (count > 1) {
+                html += `
+                    <div class="empty-state" style="padding:10px;">
+                        <p style="font-size:13px;">+${count - 1} participante(s) mas</p>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html || `
+                <div class="empty-state">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18 18v3a1 1 0 001 1h1M6 18v3a1 1 0 001 1h1M4 16a1 1 0 011-1V5a1 1 0 011-1h10a1 1 0 011 1v11a1 1 0 01-1 1H6a1 1 0 01-1-1z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 10h4m-2-2v4"/>
+                    </svg>
+                    <p>Sin participantes registrados</p>
+                </div>
+            `;
+        }
+
+        // Cargar horarios
+        async function cargarHorarios() {
+            try {
+                const { data, error } = await supabase
+                    .from('horarios')
+                    .select('*')
+                    .eq('grupo_id', groupId)
+                    .order('id');
+
+                if (error) throw error;
+                horarios = data || [];
+                renderHorarios();
+
+            } catch (err) {
+                console.error('Error:', err);
+                document.getElementById('scheduleBody').innerHTML = '<tr><td colspan="5" class="empty-state"><p>No hay horarios definidos</p></td></tr>';
+            }
+        }
+
+        function formatearHora(hora) {
+            if (!hora) return '';
+            // Si tiene formato HH:MM:SS, solo tomar HH:MM
+            if (hora.length > 5) {
+                return hora.substring(0, 5);
+            }
+            return hora;
+        }
+
+        function renderHorarios() {
+            const tbody = document.getElementById('scheduleBody');
+            
+            if (horarios.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="${esCreador ? 5 : 5}" class="empty-state">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 9.75l3 3 3-3"/>
+                            </svg>
+                            <p>No hay horarios definidos</p>
+                            ${esCreador ? '<p style="font-size:13px;margin-top:8px;">Haz clic en "+ Agregar" para crear un horario</p>' : ''}
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = horarios.map(h => `
+                <tr>
+                    <td><span class="day-cell">${h.dia}</span></td>
+                    <td>${formatearHora(h.hora_inicio)} - ${formatearHora(h.hora_fin)}</td>
+                    <td>${h.ubicacion || currentGroup.ubicacion || 'Por definir'}</td>
+                    <td>${h.tema || 'Por definir'}</td>
+                    <td>
+                        <div class="horario-actions">
+                            ${h.link_clase ? `<a href="${h.link_clase}" target="_blank" class="btn-link-clase">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                </svg>
+                                Unirse
+                            </a>` : '<span style="color:var(--text-muted);font-size:12px;">Sin enlace</span>'}
+                            ${esCreador ? `<button class="btn-delete-horario" onclick="eliminarHorario(${h.id})">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>` : ''}
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Cargar materiales
+        async function cargarMateriales() {
+            try {
+                const { data, error } = await supabase
+                    .from('materiales')
+                    .select('*')
+                    .eq('grupo_id', groupId)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+                materiales = data || [];
+                renderMateriales();
+                document.getElementById('totalMaterials').textContent = materiales.length;
+
+            } catch (err) {
+                console.error('Error:', err);
+                document.getElementById('materialsContainer').innerHTML = '<div class="empty-state"><p>No hay materiales disponibles</p></div>';
+            }
+        }
+
+        function renderMateriales() {
+            const container = document.getElementById('materialsContainer');
+            
+            if (materiales.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1/-1;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <p>No hay materiales disponibles</p>
+                        ${esCreador ? '<p style="font-size:13px;margin-top:8px;">Haz clic en "+ Subir Material" para agregar recursos</p>' : ''}
+                    </div>
+                `;
+                return;
+            }
+
+            const iconosSvg = {
+                pdf: '📄',
+                video: '🎬',
+                doc: '📝',
+                link: '🔗',
+                default: '📁'
+            };
+
+            container.innerHTML = materiales.map(m => `
+                <div class="material-card">
+                    <div class="material-header">
+                        <div class="material-icon ${iconos[m.tipo] || 'icon-default'}">${iconosSvg[m.tipo] || iconosSvg['default']}</div>
+                        <div class="material-info">
+                            <h4 class="material-title">${m.nombre}</h4>
+                            <p class="material-type">${m.tipo.toUpperCase()}${m.tamano ? ' • ' + m.tamano : ''}</p>
+                        </div>
+                    </div>
+                    <div class="material-actions">
+                        ${m.url ? `<button class="btn-material btn-download-material" onclick="descargarMaterial('${m.url}', '${m.nombre}', '${m.tipo}')">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                            Descargar
+                        </button>` : ''}
+                        ${esCreador ? `<button class="btn-material btn-delete-material" onclick="eliminarMaterial(${m.id})" title="Eliminar">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                        </button>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function descargarMaterial(url, nombre, tipo) {
+            if (!url) {
+                showToast('URL no disponible', 'error');
+                return;
+            }
+            
+            showToast('Iniciando descarga...', 'success');
+            
+            try {
+                if (tipo === 'link' || (url.startsWith('http://') && !url.includes('supabase'))) {
+                    window.open(url, '_blank');
+                    return;
+                }
+
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Error al descargar');
+                
+                const blob = await response.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = nombre || 'material';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(downloadUrl);
+                
+                showToast('Descarga completada: ' + nombre, 'success');
+            } catch (err) {
+                console.error('Error descargando:', err);
+                window.open(url, '_blank');
+            }
+        }
+
+        // Cargar progreso
+        async function cargarProgreso() {
+            try {
+                const { data, error } = await supabase
+                    .from('progreso')
+                    .select('*')
+                    .eq('grupo_id', groupId)
+                    .order('orden');
+
+                if (error) throw error;
+                progreso = data || [];
+                renderProgreso();
+
+            } catch (err) {
+                console.error('Error:', err);
+                document.getElementById('progressItems').innerHTML = '<div class="empty-state"><p>Sin tareas de progreso</p></div>';
+            }
+        }
+
+        function renderProgreso() {
+            const container = document.getElementById('progressItems');
+            
+            if (progreso.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="padding:20px;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <p>Sin tareas de progreso</p>
+                        ${esCreador ? '<p style="font-size:12px;margin-top:6px;">Agrega tareas para trackear el avance</p>' : ''}
+                    </div>
+                `;
+                actualizarBarraProgreso(0, 0);
+                return;
+            }
+
+            const completados = progreso.filter(p => p.completado).length;
+            const porcentaje = progreso.length > 0 ? Math.round((completados / progreso.length) * 100) : 0;
+            
+            actualizarBarraProgreso(porcentaje, completados);
+
+            container.innerHTML = progreso.map(p => `
+                <div class="task-item ${p.completado ? 'completed' : ''}" onclick="${esCreador ? `toggleProgreso(${p.id}, ${!p.completado})` : ''}">
+                    <div class="task-checkbox">
+                        ${p.completado ? '<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>' : ''}
+                    </div>
+                    <span class="task-text">${p.titulo}</span>
+                    ${esCreador ? `<button class="btn-icon btn-delete" onclick="event.stopPropagation(); eliminarProgreso(${p.id})" style="width:28px;height:28px;flex:0 0 28px;">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function actualizarBarraProgreso(porcentaje, completados) {
+            document.getElementById('progressBar').style.width = porcentaje + '%';
+            document.getElementById('progressPercent').textContent = porcentaje + '%';
+            document.getElementById('completedTasks').textContent = completados;
+        }
+
+        async function toggleProgreso(id, completado) {
+            if (!esCreador) return;
+
+            try {
+                const { error } = await supabase
+                    .from('progreso')
+                    .update({ completado })
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                const index = progreso.findIndex(p => p.id === id);
+                if (index !== -1) {
+                    progreso[index].completado = completado;
+                }
+                renderProgreso();
+
+            } catch (err) {
+                console.error('Error:', err);
+                showToast('Error al actualizar progreso', 'error');
+            }
+        }
+
+        // Cargar anuncios
+        async function cargarAnuncios() {
+            try {
+                const { data, error } = await supabase
+                    .from('anuncios')
+                    .select('*')
+                    .eq('grupo_id', groupId)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+                anuncios = data || [];
+                renderAnuncios();
+
+            } catch (err) {
+                console.error('Error:', err);
+                document.getElementById('announcementsContainer').innerHTML = '<div class="empty-state"><p>No hay anuncios</p></div>';
+            }
+        }
+
+        function renderAnuncios() {
+            const container = document.getElementById('announcementsContainer');
+            
+            if (anuncios.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11.48 3.496a1.15 1.15 0 011.01 0l8.666 3.998a1.15 1.15 0 010 2.02l-8.666 3.998a1.15 1.15 0 01-1.01 0L2.888 9.525a1.15 1.15 0 010-2.02l8.666-3.998z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11.48 12.496a1.15 1.15 0 011.01 0l8.666 3.998a1.15 1.15 0 010 2.02l-8.666 3.998a1.15 1.15 0 01-1.01 0L2.888 15.525a1.15 1.15 0 010-2.02l8.666-3.998z"/>
+                        </svg>
+                        <p>No hay anuncios</p>
+                        ${esCreador ? '<p style="font-size:13px;margin-top:8px;">Publica anuncios para tu grupo</p>' : ''}
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = anuncios.map(a => {
+                const fecha = new Date(a.created_at).toLocaleDateString('es-PE', { day: 'numeric', month: 'short', year: 'numeric' });
+                return `
+                    <div class="announcement-card">
+                        <div class="announcement-header">
+                            <span class="announcement-title">${a.titulo}</span>
+                            <span class="announcement-date">${fecha}</span>
+                        </div>
+                        <p class="announcement-content">${a.contenido}</p>
+                        ${esCreador ? `<button class="btn btn-danger" style="margin-top:12px;padding:8px 16px;font-size:13px;" onclick="eliminarAnuncio(${a.id})">Eliminar</button>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function initFileUpload() {
+            const uploadArea = document.getElementById('fileUploadArea');
+            const fileInput = document.getElementById('materialFile');
+
+            uploadArea.addEventListener('click', () => fileInput.click());
+
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                if (e.dataTransfer.files.length) {
+                    handleFileSelect(e.dataTransfer.files[0]);
+                }
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length) {
+                    handleFileSelect(e.target.files[0]);
+                }
+            });
+        }
+
+        function handleFileSelect(file) {
+            if (file.size > 50 * 1024 * 1024) {
+                showToast('El archivo es muy grande (max 50MB)', 'error');
+                return;
+            }
+
+            selectedFile = file;
+            const fileSelected = document.getElementById('fileSelected');
+            const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+            
+            fileSelected.classList.add('active');
+            fileSelected.innerHTML = `
+                <span class="file-selected-name">${file.name}</span>
+                <span class="file-selected-size">${sizeMB} MB</span>
+                <button type="button" onclick="removeSelectedFile()" style="background:none;border:none;cursor:pointer;color:var(--error);font-size:18px;font-weight:bold;margin-left:auto;">✕</button>
+            `;
+
+            document.getElementById('materialUrl').value = '';
+            document.getElementById('materialValidationMsg').style.display = 'none';
+
+            const ext = file.name.split('.').pop().toLowerCase();
+            const tipoSelect = document.getElementById('materialTipo');
+            if (['pdf'].includes(ext)) tipoSelect.value = 'pdf';
+            else if (['mp4', 'avi', 'mov', 'webm'].includes(ext)) tipoSelect.value = 'video';
+            else if (['doc', 'docx', 'txt', 'ppt', 'pptx', 'xls', 'xlsx'].includes(ext)) tipoSelect.value = 'doc';
+            else tipoSelect.value = 'doc';
+        }
+
+        function removeSelectedFile() {
+            selectedFile = null;
+            document.getElementById('fileSelected').classList.remove('active');
+            document.getElementById('materialFile').value = '';
+        }
+
+        function initForms() {
+            document.getElementById('materialForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await agregarMaterial();
+            });
+
+            document.getElementById('progresoForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await agregarProgreso();
+            });
+
+            document.getElementById('horarioForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await agregarHorario();
+            });
+
+            document.getElementById('anuncioForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await agregarAnuncio();
+            });
+
+            document.querySelectorAll('.modal-overlay').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.classList.remove('active');
+                    }
+                });
+            });
+
+            document.getElementById('materialUrl').addEventListener('input', (e) => {
+                if (e.target.value.trim()) {
+                    removeSelectedFile();
+                }
+                document.getElementById('materialValidationMsg').style.display = 'none';
+            });
+        }
+
+        function abrirModalMaterial() { 
+            document.getElementById('materialModal').classList.add('active'); 
+            document.getElementById('materialValidationMsg').style.display = 'none';
+        }
+        function cerrarModalMaterial() { 
+            document.getElementById('materialModal').classList.remove('active'); 
+            document.getElementById('materialForm').reset();
+            removeSelectedFile();
+            document.getElementById('materialValidationMsg').style.display = 'none';
+            // Ocultar barra de progreso al cerrar modal
+            document.getElementById('uploadProgressContainer').style.display = 'none';
+            document.getElementById('uploadProgressBar').style.width = '0%';
+        }
+        
+        function abrirModalProgreso() { document.getElementById('progresoModal').classList.add('active'); }
+        function cerrarModalProgreso() { document.getElementById('progresoModal').classList.remove('active'); document.getElementById('progresoForm').reset(); }
+        
+        function abrirModalHorario() { document.getElementById('horarioModal').classList.add('active'); }
+        function cerrarModalHorario() { document.getElementById('horarioModal').classList.remove('active'); document.getElementById('horarioForm').reset(); }
+        
+        function abrirModalAnuncio() { document.getElementById('anuncioModal').classList.add('active'); }
+        function cerrarModalAnuncio() { document.getElementById('anuncioModal').classList.remove('active'); document.getElementById('anuncioForm').reset(); }
+
+        async function agregarMaterial() {
+            const url = document.getElementById('materialUrl').value.trim();
+            const validationMsg = document.getElementById('materialValidationMsg');
+            
+            if (!selectedFile && !url) {
+                validationMsg.textContent = 'Debes subir un archivo O ingresar una URL';
+                validationMsg.style.display = 'block';
+                return;
+            }
+
+            let finalUrl = url;
+            let tamano = null;
+
+            const progressContainer = document.getElementById('uploadProgressContainer');
+            const progressBar = document.getElementById('uploadProgressBar');
+            const statusText = document.getElementById('uploadStatusText');
+            const percentText = document.getElementById('uploadPercentText');
+
+            if (selectedFile) {
+                progressContainer.classList.add('active');
+                statusText.textContent = 'Preparando archivo...';
+                progressBar.style.width = '10%';
+                percentText.textContent = '10%';
+                
+                try {
+                    const nombreLimpio = sanitizarNombreArchivo(selectedFile.name);
+                    const fileName = `${groupId}_${Date.now()}_${nombreLimpio}`;
+                    
+                    statusText.textContent = 'Subiendo archivo...';
+                    
+                    const { data: uploadData, error: uploadError } = await supabase.storage
+                        .from('materiales')
+                        .upload(fileName, selectedFile, {
+                            onProgress: (progress) => {
+                                const percentage = Math.round(progress.loaded / progress.total * 100);
+                                progressBar.style.width = percentage + '%';
+                                percentText.textContent = percentage + '%';
+                                statusText.textContent = `Subiendo: ${percentage}%`;
+                            }
+                        });
+
+                    if (uploadError) {
+                        console.error('Error subiendo:', uploadError);
+                        showToast('Error al subir archivo: ' + uploadError.message, 'error');
+                        progressContainer.classList.remove('active');
+                        return;
+                    }
+                    
+                    statusText.textContent = 'Procesando...';
+                    progressBar.style.width = '70%';
+                    percentText.textContent = '70%';
+                    
+                    const { data: urlData } = supabase.storage
+                        .from('materiales')
+                        .getPublicUrl(fileName);
+                    
+                    finalUrl = urlData.publicUrl;
+                    tamano = (selectedFile.size / (1024 * 1024)).toFixed(2) + ' MB';
+                    
+                    statusText.textContent = 'Completado!';
+                    progressBar.style.width = '100%';
+                    percentText.textContent = '100%';
+                    
+                } catch (err) {
+                    console.error('Error:', err);
+                    showToast('Error al subir archivo', 'error');
+                    progressContainer.classList.remove('active');
+                    return;
+                }
+            }
+
+            const nuevo = {
+                grupo_id: parseInt(groupId),
+                nombre: document.getElementById('materialNombre').value,
+                tipo: document.getElementById('materialTipo').value,
+                url: finalUrl || null,
+                tamano: tamano
+            };
+
+            try {
+                const { data, error } = await supabase.from('materiales').insert([nuevo]).select().single();
+                if (error) throw error;
+
+                materiales.unshift(data);
+                renderMateriales();
+                document.getElementById('totalMaterials').textContent = materiales.length;
+                cerrarModalMaterial();
+                
+                progressContainer.classList.remove('active');
+                progressBar.style.width = '0%';
+                
+                showToast('Material agregado exitosamente', 'success');
+
+            } catch (err) {
+                console.error('Error:', err);
+                showToast('Error al agregar material', 'error');
+                progressContainer.classList.remove('active');
+            }
+        }
+
+        async function eliminarMaterial(id) {
+            if (!confirm('¿Eliminar este material?')) return;
+
+            try {
+                const { error } = await supabase.from('materiales').delete().eq('id', id);
+                if (error) throw error;
+
+                materiales = materiales.filter(m => m.id !== id);
+                renderMateriales();
+                document.getElementById('totalMaterials').textContent = materiales.length;
+                showToast('Material eliminado', 'success');
+
+            } catch (err) {
+                console.error('Error:', err);
+                showToast('Error al eliminar', 'error');
+            }
+        }
+
+        async function agregarProgreso() {
+            const nuevo = {
+                grupo_id: parseInt(groupId),
+                titulo: document.getElementById('progresoTitulo').value,
+                completado: false,
+                orden: progreso.length
+            };
+
+            try {
+                const { data, error } = await supabase.from('progreso').insert([nuevo]).select().single();
+                if (error) throw error;
+
+                progreso.push(data);
+                renderProgreso();
+                cerrarModalProgreso();
+                showToast('Tarea agregada', 'success');
+
+            } catch (err) {
+                console.error('Error:', err);
+                showToast('Error al agregar tarea', 'error');
+            }
+        }
+
+        async function eliminarProgreso(id) {
+            try {
+                const { error } = await supabase.from('progreso').delete().eq('id', id);
+                if (error) throw error;
+
+                progreso = progreso.filter(p => p.id !== id);
+                renderProgreso();
+                showToast('Tarea eliminada', 'success');
+
+            } catch (err) {
+                console.error('Error:', err);
+                showToast('Error al eliminar', 'error');
+            }
+        }
+
+        async function agregarHorario() {
+            const nuevo = {
+                grupo_id: parseInt(groupId),
+                dia: document.getElementById('horarioDia').value,
+                hora_inicio: document.getElementById('horarioInicio').value,
+                hora_fin: document.getElementById('horarioFin').value,
+                ubicacion: document.getElementById('horarioUbicacion').value || null,
+                tema: document.getElementById('horarioTema').value || null,
+                link_clase: document.getElementById('horarioLinkClase').value || null
+            };
+
+            try {
+                const { data, error } = await supabase.from('horarios').insert([nuevo]).select().single();
+                if (error) throw error;
+
+                horarios.push(data);
+                renderHorarios();
+                cerrarModalHorario();
+                showToast('Horario agregado', 'success');
+
+            } catch (err) {
+                console.error('Error:', err);
+                showToast('Error al agregar horario', 'error');
+            }
+        }
+
+        async function eliminarHorario(id) {
+            if (!confirm('¿Eliminar este horario?')) return;
+
+            try {
+                const { error } = await supabase.from('horarios').delete().eq('id', id);
+                if (error) throw error;
+
+                horarios = horarios.filter(h => h.id !== id);
+                renderHorarios();
+                showToast('Horario eliminado', 'success');
+
+            } catch (err) {
+                console.error('Error:', err);
+                showToast('Error al eliminar', 'error');
+            }
+        }
+
+        async function agregarAnuncio() {
+            const nuevo = {
+                grupo_id: parseInt(groupId),
+                titulo: document.getElementById('anuncioTitulo').value,
+                contenido: document.getElementById('anuncioContenido').value
+            };
+
+            try {
+                const { data, error } = await supabase.from('anuncios').insert([nuevo]).select().single();
+                if (error) throw error;
+
+                anuncios.unshift(data);
+                renderAnuncios();
+                cerrarModalAnuncio();
+                showToast('Anuncio publicado', 'success');
+
+            } catch (err) {
+                console.error('Error:', err);
+                showToast('Error al publicar anuncio', 'error');
+            }
+        }
+
+        async function eliminarAnuncio(id) {
+            if (!confirm('¿Eliminar este anuncio?')) return;
+
+            try {
+                const { error } = await supabase.from('anuncios').delete().eq('id', id);
+                if (error) throw error;
+
+                anuncios = anuncios.filter(a => a.id !== id);
+                renderAnuncios();
+                showToast('Anuncio eliminado', 'success');
+
+            } catch (err) {
+                console.error('Error:', err);
+                showToast('Error al eliminar', 'error');
+            }
+        }
+
+        async function salirDelGrupo() {
+            if (!confirm('¿Seguro que deseas salir de este grupo?')) return;
+
+            try {
+                await supabase
+                    .from('grupos')
+                    .update({ participantes: Math.max((currentGroup.participantes || 1) - 1, 0) })
+                    .eq('id', groupId);
+
+                if (currentUser) {
+                    await supabase.from('miembros_grupo')
+                        .delete()
+                        .eq('grupo_id', groupId)
+                        .eq('usuario_id', currentUser.id);
+                }
+
+                let miembros = JSON.parse(localStorage.getItem('fishub_miembros') || '[]');
+                miembros = miembros.filter(id => id !== parseInt(groupId));
+                localStorage.setItem('fishub_miembros', JSON.stringify(miembros));
+
+                showToast('Has salido del grupo', 'success');
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1000);
+
+            } catch (err) {
+                console.error('Error:', err);
+                showToast('Error al salir del grupo', 'error');
+            }
+        }
+
+        function compartirGrupo() {
+            const url = window.location.href;
+            if (navigator.share) {
+                navigator.share({
+                    title: `Fishub - ${currentGroup.nombre}`,
+                    text: `Unete al grupo "${currentGroup.nombre}" en Fishub`,
+                    url: url
+                });
+            } else {
+                navigator.clipboard.writeText(url);
+                showToast('Enlace copiado al portapapeles', 'success');
+            }
+        }
+
+        function volverInicio() {
+            window.location.href = 'index.html';
+        }
+
+        function showToast(message, type = '') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast show ' + type;
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+    </script>
+</body>
+</html>

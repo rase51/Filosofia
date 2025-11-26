@@ -1,0 +1,2629 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fishub - Plataforma Educativa</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary: #10b981;
+            --accent: #8b5cf6;
+            --accent-pink: #ec4899;
+            --background: #0a1628;
+            --background-alt: #1a2d4a;
+            --surface: #1e293b;
+            --surface-alt: #0f172a;
+            --text: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: rgba(59, 130, 246, 0.2);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 16px;
+            line-height: 1.6;
+            color: var(--text);
+            background: linear-gradient(135deg, var(--background) 0%, var(--background-alt) 50%, var(--surface-alt) 100%);
+            min-height: 100vh;
+        }
+
+        /* Navegacion */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            color: var(--primary);
+        }
+
+        .nav-menu {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--primary);
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        .nav-auth {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .user-name {
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            font-size: 1rem;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-secondary:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--error), #dc2626);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .menu-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        .menu-toggle span {
+            width: 24px;
+            height: 2px;
+            background-color: var(--text);
+        }
+
+        /* Hero */
+        .hero {
+            margin-top: 80px;
+            padding: 4rem 2rem;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 50%, rgba(236, 72, 153, 0.05) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 50%, rgba(139, 92, 246, 0.15) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .hero-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-text {
+            max-width: 800px;
+            margin-bottom: 3rem;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.1;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .highlight {
+            color: var(--primary);
+        }
+
+        .hero-description {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(145deg, var(--surface) 0%, var(--surface-alt) 100%);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* Sections */
+        .section {
+            padding: 4rem 2rem;
+        }
+
+        .section-alt {
+            background: rgba(30, 41, 59, 0.5);
+        }
+
+        .section-container {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .section-description {
+            font-size: 1.125rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .filter-btn, .category-btn {
+            padding: 0.5rem 1.5rem;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-secondary);
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .filter-btn:hover, .category-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .filter-btn.active, .category-btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-color: transparent;
+            color: white;
+        }
+
+        /* Create Group Button */
+        .btn-create-group {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-size: 1.125rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-create-group:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Grids */
+        .groups-grid, .library-grid, .courses-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 2rem;
+        }
+
+        /* Cards */
+        .group-card, .resource-card, .course-card {
+            background: linear-gradient(145deg, var(--surface) 0%, var(--surface-alt) 100%);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--border);
+        }
+
+        .group-card:hover, .resource-card:hover, .course-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+        }
+
+        .card-badge {
+            display: inline-block;
+            padding: 0.25rem 1rem;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        .card-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .creator-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: linear-gradient(135deg, var(--secondary), #10b981);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 0.75rem;
+            vertical-align: middle;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+            flex: 1;
+        }
+
+        .card-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .info-icon {
+            width: 16px;
+            height: 16px;
+            color: var(--primary);
+        }
+
+        .card-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .card-footer {
+            padding: 1.5rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-card {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            font-size: 0.875rem;
+        }
+
+        .btn-join {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+        }
+
+        .btn-join:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-info {
+            background-color: transparent;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+
+        .btn-info:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        .btn-enter {
+            background: linear-gradient(135deg, var(--secondary), #059669);
+            color: white;
+        }
+
+        .btn-enter:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-leave {
+            background: linear-gradient(135deg, var(--error), #dc2626);
+            color: white;
+        }
+
+        .btn-leave:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-download {
+            background: linear-gradient(135deg, var(--warning), #f97316);
+            color: white;
+        }
+
+        .btn-download:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Search */
+        .search-bar {
+            position: relative;
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* Feedback */
+        .feedback-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+        }
+
+        .feedback-form {
+            background: linear-gradient(145deg, var(--surface) 0%, var(--surface-alt) 100%);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .form-input, .form-textarea {
+            width: 100%;
+            padding: 1rem;
+            border: 1px solid var(--border);
+            background: var(--surface-alt);
+            color: var(--text);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .form-input:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .form-input::placeholder, .form-textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        .form-textarea {
+            resize: vertical;
+        }
+
+        .feedback-list {
+            background: linear-gradient(145deg, var(--surface) 0%, var(--surface-alt) 100%);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .feedback-list-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .feedback-item {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1rem;
+            background: rgba(59, 130, 246, 0.05);
+            border-radius: 12px;
+        }
+
+        .feedback-item:last-child {
+            border-bottom: none;
+        }
+
+        .feedback-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .feedback-author {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .feedback-badge {
+            padding: 0.25rem 0.75rem;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .feedback-text {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Footer */
+        .footer {
+            background: linear-gradient(145deg, var(--surface) 0%, var(--surface-alt) 100%);
+            color: var(--text);
+            padding: 4rem 2rem 2rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .footer-container {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 3rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-brand {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .footer-logo .logo-icon {
+            color: var(--primary);
+        }
+
+        .footer-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .footer-links h4 {
+            color: var(--text);
+            margin-bottom: 1rem;
+        }
+
+        .footer-links ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: var(--primary);
+        }
+
+        .footer-bottom {
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--surface);
+            color: var(--text);
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border);
+            transform: translateY(200%);
+            transition: transform 0.3s ease;
+            z-index: 2000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+        }
+
+        .toast.success {
+            background: linear-gradient(135deg, var(--success), #059669);
+            border-color: var(--success);
+            color: white;
+        }
+
+        .toast.error {
+            background: linear-gradient(135deg, var(--error), #dc2626);
+            border-color: var(--error);
+            color: white;
+        }
+
+        /* Modals - FONDO SOLIDO */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(145deg, var(--surface) 0%, var(--surface-alt) 100%);
+            border-radius: 20px;
+            padding: 2.5rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border);
+        }
+
+        .modal-content-large {
+            max-width: 600px;
+        }
+
+        .modal-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--secondary), #059669);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+        }
+
+        .modal-icon svg {
+            width: 40px;
+            height: 40px;
+            color: white;
+        }
+
+        .modal-title {
+            font-size: 1.75rem;
+            color: var(--text);
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .modal-text {
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+        }
+
+        .btn-confirm {
+            background: linear-gradient(135deg, var(--secondary), #059669);
+            color: white;
+        }
+
+        .btn-confirm:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-cancel {
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-cancel:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        /* Vista de detalles */
+        .group-detail-view {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--background);
+            z-index: 9000;
+            overflow-y: auto;
+            animation: slideIn 0.3s ease;
+        }
+
+        .group-detail-view.active {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+            }
+            to {
+                transform: translateX(0);
+            }
+        }
+
+        .detail-header {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
+            padding: 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .detail-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .btn-back {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .btn-back:hover {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: var(--primary);
+        }
+
+        .detail-title-section {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .detail-badge {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border-radius: 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .detail-title {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        .detail-professor {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+        }
+
+        .detail-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+
+        .detail-main {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .detail-card {
+            background: linear-gradient(145deg, var(--surface) 0%, var(--surface-alt) 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .detail-card-title {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text);
+        }
+
+        .detail-card-title svg {
+            color: var(--primary);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+
+        .info-box {
+            background: rgba(59, 130, 246, 0.1);
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .info-box-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+
+        .info-box-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .topics-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .topic-tag {
+            padding: 0.5rem 1rem;
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--primary);
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .requirements-list {
+            list-style: none;
+        }
+
+        .requirements-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        .requirements-list li:last-child {
+            border-bottom: none;
+        }
+
+        .requirements-list li svg {
+            color: var(--secondary);
+            flex-shrink: 0;
+        }
+
+        .detail-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .action-card {
+            background: linear-gradient(145deg, var(--surface) 0%, var(--surface-alt) 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .participants-count {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .participants-label {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .btn-action {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-action-primary {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+        }
+
+        .btn-action-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-action-secondary {
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-action-secondary:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        /* Feature Card - Biblioteca y Crecimiento */
+        .feature-card {
+            background: linear-gradient(145deg, var(--surface) 0%, var(--surface-alt) 100%);
+            border-radius: 20px;
+            padding: 3rem;
+            text-align: center;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+        }
+
+        .feature-icon svg {
+            width: 40px;
+            height: 40px;
+            color: white;
+        }
+
+        .feature-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--text);
+        }
+
+        .feature-description {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .btn-feature {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-feature:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Crecimiento etapas */
+        .stages-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .stage-badge {
+            padding: 0.5rem 1rem;
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--primary);
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        /* Agregando estilos para la vista de detalles del grupo */
+        .detail-hero {
+            background: linear-gradient(145deg, var(--surface) 0%, var(--surface-alt) 100%);
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .detail-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .detail-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .meta-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .meta-icon svg {
+            width: 24px;
+            height: 24px;
+            color: white;
+        }
+
+        .meta-info h4 {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+
+        .meta-info p {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .detail-section {
+            background: linear-gradient(145deg, var(--surface) 0%, var(--surface-alt) 100%);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .detail-section h3 {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.25rem;
+            color: var(--text);
+            margin-bottom: 1rem;
+        }
+
+        .detail-section h3 svg {
+            color: var(--primary);
+        }
+
+        .detail-section p {
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .btn-primary-large {
+            width: 100%;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary-large:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-danger-large {
+            width: 100%;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, var(--error), #dc2626);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 0.75rem;
+        }
+
+        .btn-danger-large:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .detail-content {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+            }
+
+            .menu-toggle {
+                display: flex;
+            }
+
+            .hero-title {
+                font-size: 2.5rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .feedback-container {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            /* Agregando estilos para la vista de detalles del grupo */
+            .detail-hero {
+                padding: 1.5rem;
+            }
+
+            .detail-meta {
+                grid-template-columns: 1fr;
+            }
+
+            .detail-title {
+                font-size: 1.75rem;
+            }
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        /* Feature Card - Biblioteca y Crecimiento */
+        .feature-card {
+            background: linear-gradient(145deg, var(--surface) 0%, var(--surface-alt) 100%);
+            border-radius: 20px;
+            padding: 3rem;
+            text-align: center;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+        }
+
+        .feature-icon svg {
+            width: 40px;
+            height: 40px;
+            color: white;
+        }
+
+        .feature-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--text);
+        }
+
+        .feature-description {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .btn-feature {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-feature:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Crecimiento etapas */
+        .stages-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .stage-badge {
+            padding: 0.5rem 1rem;
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--primary);
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navegacion -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <svg class="logo-icon" width="32" height="32" viewBox="0 0 32 32" fill="none">
+                    <path d="M16 4L4 10V16C4 23 10 28 16 28C22 28 28 23 28 16V10L16 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M16 12V20M12 16H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <span>Fishub</span>
+            </div>
+            
+            <button class="menu-toggle" id="menuToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="#inicio" class="nav-link active">Inicio</a></li>
+                <li><a href="#grupos" class="nav-link">Grupos de Estudio</a></li>
+                <li><a href="#biblioteca" class="nav-link">Biblioteca</a></li>
+                <li><a href="#cursos" class="nav-link">Crecimiento Personal</a></li>
+                <li><a href="#feedback" class="nav-link">Feedback</a></li>
+                <li class="nav-auth" id="navAuth">
+                    <!-- Se llena dinamicamente -->
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero" id="inicio">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1 class="hero-title">Potencia tu <span class="highlight">rendimiento academico</span></h1>
+                <p class="hero-description">
+                    Plataforma integral para estudiantes de Ingenieria de Sistemas UNCP. 
+                    Organiza tus grupos de estudio, accede a materiales academicos y crece profesionalmente.
+                </p>
+                <div class="hero-buttons">
+                    <a href="#grupos" class="btn btn-primary">Explorar Grupos</a>
+                    <a href="#biblioteca" class="btn btn-secondary">Biblioteca Virtual</a>
+                </div>
+            </div>
+            <div class="hero-stats">
+                <div class="stat-card">
+                    <span class="stat-number" id="statGrupos">0</span>
+                    <span class="stat-label">Grupos Activos</span>
+                </div>
+                <!-- Cambiado a contador dinamico de recursos y eliminada tercera estadistica -->
+                <div class="stat-card">
+                    <span class="stat-number" id="statRecursos">0</span>
+                    <span class="stat-label">Recursos Disponibles</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Grupos de Estudio -->
+    <section class="section" id="grupos">
+        <div class="section-container">
+            <div class="section-header">
+                <h2 class="section-title">Grupos de Estudio</h2>
+                <p class="section-description">Unete a grupos organizados por semestre y materia o crea el tuyo</p>
+            </div>
+
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <button class="btn-create-group" onclick="abrirModalCrearGrupo()">
+                    + Crear Nuevo Grupo
+                </button>
+            </div>
+
+            <div class="filters">
+                <button class="filter-btn active" data-filter="all">Todos</button>
+                <button class="filter-btn" data-filter="1">1er Semestre</button>
+                <button class="filter-btn" data-filter="2">2do Semestre</button>
+                <button class="filter-btn" data-filter="3">3er Semestre</button>
+            </div>
+
+            <div class="groups-grid" id="gruposGrid">
+                <div class="loading"><div class="spinner"></div></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Biblioteca Virtual -->
+    <section class="section section-alt" id="biblioteca">
+        <div class="section-container">
+            <div class="section-header">
+                <h2 class="section-title">Biblioteca Virtual</h2>
+                <p class="section-description">Accede a materiales academicos organizados por categoria</p>
+            </div>
+
+            <!-- Mejorado estilo de la seccion biblioteca para que resalte como crecimiento personal -->
+            <div style="display: flex; flex-direction: column; align-items: center; padding: 3rem 1rem; background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%); border-radius: 20px; border: 1px solid rgba(59, 130, 246, 0.2);">
+                <div style="width: 100px; height: 100px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2)); border-radius: 24px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; border: 1px solid rgba(59, 130, 246, 0.3);">
+                    <svg width="50" height="50" fill="none" stroke="url(#bookGradient)" viewBox="0 0 24 24">
+                        <defs>
+                            <linearGradient id="bookGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#60a5fa"/>
+                                <stop offset="100%" style="stop-color:#a78bfa"/>
+                            </linearGradient>
+                        </defs>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
+                </div>
+                <h3 style="font-size: 1.75rem; font-weight: 700; margin-bottom: 1rem; background: linear-gradient(135deg, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Explora Nuestra Coleccion</h3>
+                <p style="color: #94a3b8; font-size: 1.1rem; margin-bottom: 2rem; text-align: center; max-width: 500px; line-height: 1.7;">
+                    Accede a libros, apuntes, ejercicios y proyectos organizados por semestre y categoria para potenciar tu aprendizaje.
+                </p>
+                <!-- Eliminada la estadistica de Categorias, dejando solo Recursos y Semestres -->
+                <div style="display: flex; gap: 2rem; margin-bottom: 2rem; flex-wrap: wrap; justify-content: center;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 2rem; font-weight: 700; background: linear-gradient(135deg, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent;" id="statRecursosBiblioteca">0</div>
+                        <div style="color: #64748b; font-size: 0.9rem;">Recursos</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 2rem; font-weight: 700; background: linear-gradient(135deg, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">3</div>
+                        <div style="color: #64748b; font-size: 0.9rem;">Semestres</div>
+                    </div>
+                </div>
+                <a href="biblioteca.html" style="display: inline-flex; align-items: center; gap: 12px; padding: 1rem 2.5rem; background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; border-radius: 14px; text-decoration: none; font-weight: 600; font-size: 1.1rem; transition: all 0.3s ease; box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
+                    Explorar Biblioteca Completa
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Cursos -->
+    <section class="section" id="cursos">
+        <div class="section-container">
+            <div class="section-header">
+                <h2 class="section-title">Crecimiento Personal</h2>
+                <p class="section-description">Desarrolla habilidades blandas y tecnicas para tu carrera profesional a traves de un camino visual interactivo</p>
+            </div>
+
+            <div style="display: flex; flex-direction: column; align-items: center; padding: 3rem 1rem; background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%); border-radius: 20px; border: 1px solid rgba(59, 130, 246, 0.2);">
+                <div style="font-size: 4rem; margin-bottom: 1rem;">🚀</div>
+                <h3 style="font-size: 1.5rem; color: #e2e8f0; margin-bottom: 0.5rem; text-align: center;">Tu Mapa de Crecimiento</h3>
+                <p style="color: #94a3b8; text-align: center; max-width: 500px; margin-bottom: 1.5rem; line-height: 1.6;">
+                    Recorre un camino visual con 6 etapas de desarrollo personal. Cada etapa es una infografia 
+                    con consejos practicos, errores comunes y transformaciones clave para tu exito universitario.
+                </p>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; margin-bottom: 1.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(59, 130, 246, 0.2); border-radius: 20px; font-size: 0.85rem; color: #60a5fa;">
+                        <span>⏱️</span> Gestion del Tiempo
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(139, 92, 246, 0.2); border-radius: 20px; font-size: 0.85rem; color: #a78bfa;">
+                        <span>📚</span> Habitos de Estudio
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(236, 72, 153, 0.2); border-radius: 20px; font-size: 0.85rem; color: #f472b6;">
+                        <span>🎤</span> Comunicacion
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(245, 158, 11, 0.2); border-radius: 20px; font-size: 0.85rem; color: #fbbf24;">
+                        <span>🤝</span> Trabajo en Equipo
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(16, 185, 129, 0.2); border-radius: 20px; font-size: 0.85rem; color: #34d399;">
+                        <span>🧘</span> Manejo del Estres
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(99, 102, 241, 0.2); border-radius: 20px; font-size: 0.85rem; color: #818cf8;">
+                        <span>🎯</span> Vision y Metas
+                    </div>
+                </div>
+                <a href="crecimiento.html" style="display: inline-flex; align-items: center; gap: 0.75rem; padding: 1rem 2rem; background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); color: white; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 1rem; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);">
+                    <span>Comenzar mi camino</span>
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-7H6"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Feedback -->
+    <section class="section section-alt" id="feedback">
+        <div class="section-container">
+            <div class="section-header">
+                <h2 class="section-title">Comparte tu Feedback</h2>
+                <p class="section-description">Ayudanos a mejorar la plataforma con tus comentarios</p>
+            </div>
+
+            <div class="feedback-container">
+                <form class="feedback-form" id="feedbackForm">
+                    <div class="form-group">
+                        <label for="feedbackName">Nombre</label>
+                        <input type="text" id="feedbackName" class="form-input" placeholder="Tu nombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="feedbackSemester">Semestre</label>
+                        <select id="feedbackSemester" class="form-input" required>
+                            <option value="">Selecciona tu semestre</option>
+                            <option value="1">1er Semestre</option>
+                            <option value="2">2do Semestre</option>
+                            <option value="3">3er Semestre</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="feedbackCategory">Categoria</label>
+                        <select id="feedbackCategory" class="form-input" required>
+                            <option value="">Selecciona una categoria</option>
+                            <option value="grupos">Grupos de Estudio</option>
+                            <option value="biblioteca">Biblioteca Virtual</option>
+                            <option value="cursos">Cursos</option>
+                            <option value="general">General</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="feedbackMessage">Tu comentario</label>
+                        <textarea id="feedbackMessage" class="form-textarea" rows="5" placeholder="Comparte tus sugerencias..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Enviar Feedback</button>
+                </form>
+
+                <div class="feedback-list">
+                    <h3 class="feedback-list-title">Comentarios Recientes</h3>
+                    <div id="feedbackList">
+                        <div class="loading"><div class="spinner"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div class="footer-logo">
+                        <svg class="logo-icon" width="32" height="32" viewBox="0 0 32 32" fill="none">
+                            <path d="M16 4L4 10V16C4 23 10 28 16 28C22 28 28 23 28 16V10L16 4Z" stroke="currentColor" stroke-width="2"/>
+                            <path d="M16 12V20M12 16H20" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        <span>Fishub</span>
+                    </div>
+                    <p class="footer-description">Plataforma educativa para estudiantes de Ingenieria de Sistemas UNCP.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Plataforma</h4>
+                    <ul>
+                        <li><a href="#grupos">Grupos de Estudio</a></li>
+                        <li><a href="#biblioteca">Biblioteca Virtual</a></li>
+                        <li><a href="#cursos">Crecimiento Personal</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>Recursos</h4>
+                    <ul>
+                        <li><a href="#">Guia de Uso</a></li>
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">Soporte</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>Contacto</h4>
+                    <ul>
+                        <li><a href="mailto:fishub@uncp.edu.pe">fishub@uncp.edu.pe</a></li>
+                        <li><a href="#">Facebook</a></li>
+                        <li><a href="#">WhatsApp</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>2025 Fishub - Facultad de Ingenieria de Sistemas UNCP</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Vista de Detalles del Grupo -->
+    <div class="group-detail-view" id="detailView">
+        <div class="detail-header">
+            <div class="detail-nav">
+                <button class="btn-back" onclick="cerrarDetalles()">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    Volver
+                </button>
+                <h2 id="detailHeaderTitle">Detalles del Grupo</h2>
+                <button class="btn-back" onclick="compartirGrupo()">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684z"/>
+                    </svg>
+                    Compartir
+                </button>
+            </div>
+        </div>
+        <div class="detail-content" id="detailContent"></div>
+    </div>
+
+    <!-- Modal de Confirmacion para Unirse -->
+    <div class="modal" id="joinModal">
+        <div class="modal-content">
+            <div class="modal-icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                </svg>
+            </div>
+            <h3 class="modal-title">Unirse al Grupo</h3>
+            <p class="modal-text" id="joinModalText">Deseas unirte a este grupo de estudio?</p>
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="cerrarModalUnirse()">Cancelar</button>
+                <button class="btn-confirm" onclick="confirmarUnirse()">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Crear Grupo -->
+    <div class="modal" id="createGroupModal">
+        <div class="modal-content modal-content-large">
+            <h2 class="modal-title">Crear Nuevo Grupo</h2>
+            <form id="createGroupForm">
+                <div class="form-group">
+                    <label>Nombre del Grupo *</label>
+                    <input type="text" id="groupName" class="form-input" placeholder="Ej: Calculo I - Grupo A" required>
+                </div>
+                <div class="form-group">
+                    <label>Semestre *</label>
+                    <select id="groupSemester" class="form-input" required>
+                        <option value="">Selecciona el semestre</option>
+                        <option value="1">1er Semestre</option>
+                        <option value="2">2do Semestre</option>
+                        <option value="3">3er Semestre</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Profesor/Tutor</label>
+                    <input type="text" id="groupProfesor" class="form-input" placeholder="Nombre del profesor">
+                </div>
+                <div class="form-group">
+                    <label>Horario *</label>
+                    <input type="text" id="groupHorario" class="form-input" placeholder="Ej: Lunes y Miercoles 10:00 - 12:00" required>
+                </div>
+                <div class="form-group">
+                    <label>Ubicacion *</label>
+                    <input type="text" id="groupUbicacion" class="form-input" placeholder="Ej: Aula 301 - Pabellon A" required>
+                </div>
+                <div class="form-group">
+                    <label>Descripcion</label>
+                    <textarea id="groupDescripcion" class="form-textarea" rows="3" placeholder="Descripcion del grupo"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Temas (separados por coma)</label>
+                    <input type="text" id="groupTemas" class="form-input" placeholder="Ej: Limites, Derivadas, Integrales">
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" onclick="cerrarModalCrearGrupo()">Cancelar</button>
+                    <button type="submit" class="btn-confirm">Crear Grupo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Configuracion Supabase
+        const SUPABASE_URL = 'https://cuanxvisilnzqkwatgou.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1YW54dmlzaWxuenFrd2F0Z291Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwOTQ0MDEsImV4cCI6MjA3OTY3MDQwMX0.EkoyQjv6tgPG_eJER4MS7gjvKju_sl6YiS-lvzkTqhY';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Estado global
+        let currentUser = null;
+        let gruposData = [];
+        let grupoSeleccionado = null;
+        let currentFilter = 'all';
+
+        // Datos estaticos para biblioteca y cursos
+
+        // Inicializacion
+        document.addEventListener('DOMContentLoaded', async () => {
+            verificarSesion();
+            await cargarGrupos();
+            await cargarFeedback();
+            await cargarRecursos();
+            initEventListeners();
+            // Manejo del envio del formulario de creacion de grupo
+            document.getElementById('createGroupForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                crearGrupo();
+            });
+            // Manejo del envio del formulario de feedback
+            document.getElementById('feedbackForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                enviarFeedback();
+            });
+        });
+
+        // Verificar sesion guardada
+        function verificarSesion() {
+            const savedUser = localStorage.getItem('fishub_user');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                actualizarNavAuth();
+            } else {
+                actualizarNavAuth();
+            }
+        }
+
+        function actualizarNavAuth() {
+            const navAuth = document.getElementById('navAuth');
+            if (currentUser) {
+                navAuth.innerHTML = `
+                    <div class="user-info">
+                        <div class="user-avatar">${currentUser.nombre.charAt(0).toUpperCase()}</div>
+                        <span class="user-name">${currentUser.nombre}</span>
+                    </div>
+                    <button class="btn btn-secondary btn-small" onclick="cerrarSesion()">Salir</button>
+                `;
+            } else {
+                navAuth.innerHTML = `
+                    <a href="auth.html" class="btn btn-secondary btn-small">Iniciar Sesion</a>
+                    <a href="auth.html" class="btn btn-primary btn-small">Registrarse</a>
+                `;
+            }
+        }
+
+        // Cerrar sesion
+        function cerrarSesion() {
+            localStorage.removeItem('fishub_user');
+            currentUser = null;
+            actualizarNavAuth();
+            showToast('Sesion cerrada', 'success');
+        }
+
+        // Inicializar event listeners
+        function initEventListeners() {
+            // Menu toggle
+            document.getElementById('menuToggle').addEventListener('click', () => {
+                document.getElementById('navMenu').classList.toggle('active');
+            });
+
+            // Filtros de grupos
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentFilter = btn.dataset.filter;
+                    renderGrupos(currentFilter);
+                });
+            });
+
+            // Cerrar modales con click afuera
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.classList.remove('active');
+                    }
+                });
+            });
+
+            window.addEventListener('scroll', () => {
+                const sections = document.querySelectorAll('section[id]');
+                const navLinks = document.querySelectorAll('.nav-link');
+                
+                let currentSection = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop - 100;
+                    const sectionHeight = section.offsetHeight;
+                    if (window.scrollY >= sectionTop && window.scrollY < sectionTop + sectionHeight) {
+                        currentSection = section.getAttribute('id');
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === `#${currentSection}`) {
+                        link.classList.add('active');
+                    }
+                });
+            });
+        }
+
+        // Cargar grupos
+        async function cargarGrupos() {
+            try {
+                const { data, error } = await supabase
+                    .from('grupos')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                gruposData = data || [];
+                document.getElementById('statGrupos').textContent = gruposData.length;
+                renderGrupos('all');
+
+            } catch (err) {
+                console.error('Error:', err);
+                document.getElementById('gruposGrid').innerHTML = '<div class="empty-state" style="grid-column: 1/-1;"><p>Error al cargar grupos. Intenta de nuevo.</p></div>';
+            }
+        }
+
+        // Renderizar grupos
+        function renderGrupos(filter) {
+            const grid = document.getElementById('gruposGrid');
+            let filtrados = gruposData;
+
+            if (filter !== 'all') {
+                filtrados = gruposData.filter(g => g.semestre === parseInt(filter));
+            }
+
+            if (filtrados.length === 0) {
+                grid.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;"><p>No hay grupos disponibles. Se el primero en crear uno!</p></div>';
+                return;
+            }
+
+            grid.innerHTML = filtrados.map(grupo => {
+                const esMiembro = verificarMembresia(grupo.id);
+                const esCreador = currentUser && grupo.creator_id === currentUser.id;
+
+                return `
+                    <div class="group-card">
+                        <div class="card-header">
+                            <span class="card-badge">${grupo.semestre}° Semestre</span>
+                            <h3 class="card-title">
+                                ${grupo.nombre}
+                                ${esCreador ? '<span class="creator-badge">Creador</span>' : ''}
+                            </h3>
+                            <p class="card-subtitle">${grupo.profesor || 'Sin profesor asignado'}</p>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-info">
+                                <div class="info-item">
+                                    <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    <span>${grupo.horario}</span>
+                                </div>
+                                <div class="info-item">
+                                    <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    </svg>
+                                    <span>${grupo.ubicacion}</span>
+                                </div>
+                                <div class="info-item">
+                                    <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                    </svg>
+                                    <span>${grupo.participantes || 0} participantes</span>
+                                </div>
+                            </div>
+                            ${grupo.descripcion ? `<p class="card-description">${grupo.descripcion.substring(0, 100)}${grupo.descripcion.length > 100 ? '...' : ''}</p>` : ''}
+                        </div>
+                        <div class="card-footer">
+                            ${esMiembro || esCreador ? `
+                                <button class="btn-card btn-enter" onclick="entrarGrupo(${grupo.id})">Entrar</button>
+                                ${!esCreador ? `<button class="btn-card btn-leave" onclick="salirGrupo(${grupo.id})">Salir</button>` : `<button class="btn-card btn-info" onclick="verDetalles(${grupo.id})">Gestionar</button>`}
+                            ` : `
+                                <button class="btn-card btn-info" onclick="verDetalles(${grupo.id})">Mas Info</button>
+                                <button class="btn-card btn-join" onclick="unirseGrupo(${grupo.id})">Unirse</button>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Verificar membresia
+        function verificarMembresia(grupoId) {
+            const miembros = JSON.parse(localStorage.getItem('fishub_miembros') || '[]');
+            return miembros.includes(grupoId);
+        }
+
+        // Ver detalles del grupo
+        function verDetalles(grupoId) {
+            const grupo = gruposData.find(g => g.id === grupoId);
+            if (!grupo) return;
+
+            grupoSeleccionado = grupo;
+            const detailView = document.getElementById('detailView');
+            const detailContent = document.getElementById('detailContent');
+            const esMiembro = verificarMembresia(grupo.id);
+            const esCreador = currentUser && grupo.creator_id === currentUser.id;
+
+            const temas = grupo.temas ? (Array.isArray(grupo.temas) ? grupo.temas : grupo.temas.split(',')) : [];
+
+            document.getElementById('detailHeaderTitle').textContent = grupo.nombre;
+
+            detailContent.innerHTML = `
+                <div class="detail-hero">
+                    <h1 class="detail-title">
+                        ${grupo.nombre}
+                        ${esCreador ? '<span class="creator-badge">Eres el creador</span>' : ''}
+                    </h1>
+                    <p class="detail-subtitle">${grupo.profesor || 'Grupo de estudio colaborativo'}</p>
+
+                    <div class="detail-meta">
+                        <div class="meta-item">
+                            <div class="meta-icon">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <div class="meta-info">
+                                <h4>Horario</h4>
+                                <p>${grupo.horario}</p>
+                            </div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-icon">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                </svg>
+                            </div>
+                            <div class="meta-info">
+                                <h4>Ubicacion</h4>
+                                <p>${grupo.ubicacion}</p>
+                            </div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-icon">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                </svg>
+                            </div>
+                            <div class="meta-info">
+                                <h4>Participantes</h4>
+                                <p>${grupo.participantes || 0} estudiantes</p>
+                            </div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-icon">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                                </svg>
+                            </div>
+                            <div class="meta-info">
+                                <h4>Semestre</h4>
+                                <p>${grupo.semestre}° Semestre</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons">
+                        ${esMiembro || esCreador ? `
+                            <button class="btn-primary-large" onclick="entrarGrupo(${grupo.id})">Entrar al LMS</button>
+                            ${!esCreador ? `<button class="btn-danger-large" onclick="salirGrupo(${grupo.id})">Salir del Grupo</button>` : ''}
+                        ` : `
+                            <button class="btn-primary-large" onclick="unirseGrupo(${grupo.id})">Unirse al Grupo</button>
+                        `}
+                    </div>
+                </div>
+
+                ${grupo.descripcion ? `
+                <div class="detail-section">
+                    <h3>
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Descripcion
+                    </h3>
+                    <p>${grupo.descripcion}</p>
+                </div>
+                ` : ''}
+
+                ${temas.length > 0 ? `
+                <div class="detail-section">
+                    <h3>
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                        Temas del Curso
+                    </h3>
+                    <div class="topics-list">
+                        ${temas.map(tema => `<span class="topic-tag">${tema.trim()}</span>`).join('')}
+                    </div>
+                </div>
+                ` : ''}
+            `;
+
+            detailView.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Cerrar detalles
+        function cerrarDetalles() {
+            document.getElementById('detailView').classList.remove('active');
+            document.body.style.overflow = '';
+            grupoSeleccionado = null;
+        }
+
+        // Unirse a grupo - redirige a auth si no hay sesion
+        function unirseGrupo(grupoId) {
+            if (!currentUser) {
+                showToast('Debes iniciar sesion para unirte a un grupo', 'error');
+                setTimeout(() => {
+                    window.location.href = 'auth.html';
+                }, 1500);
+                return;
+            }
+
+            const grupo = gruposData.find(g => g.id === grupoId);
+            if (!grupo) return;
+
+            grupoSeleccionado = grupo;
+            document.getElementById('joinModalText').textContent = `Deseas unirte al grupo "${grupo.nombre}"?`;
+            document.getElementById('joinModal').classList.add('active');
+        }
+
+        // Cerrar modal unirse
+        function cerrarModalUnirse() {
+            document.getElementById('joinModal').classList.remove('active');
+        }
+
+        // Confirmar unirse
+        async function confirmarUnirse() {
+            if (!grupoSeleccionado || !currentUser) return;
+
+            try {
+                // Actualizar participantes en Supabase
+                const { error } = await supabase
+                    .from('grupos')
+                    .update({ participantes: (grupoSeleccionado.participantes || 0) + 1 })
+                    .eq('id', grupoSeleccionado.id);
+
+                if (error) throw error;
+
+                await supabase.from('miembros_grupo').insert([{
+                    grupo_id: grupoSeleccionado.id,
+                    usuario_id: currentUser.id
+                }]);
+
+                // Guardar membresia localmente
+                const miembros = JSON.parse(localStorage.getItem('fishub_miembros') || '[]');
+                if (!miembros.includes(grupoSeleccionado.id)) {
+                    miembros.push(grupoSeleccionado.id);
+                    localStorage.setItem('fishub_miembros', JSON.stringify(miembros));
+                }
+
+                // Actualizar datos locales
+                const index = gruposData.findIndex(g => g.id === grupoSeleccionado.id);
+                if (index !== -1) {
+                    gruposData[index].participantes = (gruposData[index].participantes || 0) + 1;
+                }
+
+                cerrarModalUnirse();
+                cerrarDetalles();
+                
+                renderGrupos(currentFilter);
+                
+                showToast('Te has unido al grupo exitosamente!', 'success');
+
+                // Redirigir al LMS
+                setTimeout(() => {
+                    window.location.href = `lms.html?groupId=${grupoSeleccionado.id}`;
+                }, 1000);
+
+            } catch (err) {
+                console.error('Error:', err);
+                showToast('Error al unirse al grupo', 'error');
+            }
+        }
+
+        // Entrar al grupo
+        function entrarGrupo(grupoId) {
+            if (!currentUser) {
+                showToast('Debes iniciar sesion', 'error');
+                setTimeout(() => {
+                    window.location.href = 'auth.html';
+                }, 1500);
+                return;
+            }
+            window.location.href = `lms.html?groupId=${grupoId}`;
+        }
+
+        // Salir del grupo
+        async function salirGrupo(grupoId) {
+            const grupo = gruposData.find(g => g.id === grupoId);
+            if (!grupo) return;
+
+            if (!confirm(`Seguro que deseas salir del grupo "${grupo.nombre}"?`)) return;
+
+            try {
+                const { error } = await supabase
+                    .from('grupos')
+                    .update({ participantes: Math.max((grupo.participantes || 1) - 1, 0) })
+                    .eq('id', grupoId);
+
+                if (error) throw error;
+
+                if (currentUser) {
+                    await supabase.from('miembros_grupo')
+                        .delete()
+                        .eq('grupo_id', grupoId)
+                        .eq('usuario_id', currentUser.id);
+                }
+
+                // Remover membresia local
+                let miembros = JSON.parse(localStorage.getItem('fishub_miembros') || '[]');
+                miembros = miembros.filter(id => id !== grupoId);
+                localStorage.setItem('fishub_miembros', JSON.stringify(miembros));
+
+                // Actualizar datos locales
+                const index = gruposData.findIndex(g => g.id === grupoId);
+                if (index !== -1) {
+                    gruposData[index].participantes = Math.max((gruposData[index].participantes || 1) - 1, 0);
+                }
+
+                cerrarDetalles();
+                renderGrupos(currentFilter);
+                showToast('Has salido del grupo', 'success');
+
+            } catch (err) {
+                console.error('Error:', err);
+                showToast('Error al salir del grupo', 'error');
+            }
+        }
+
+        // Abrir modal crear grupo - redirige a auth si no hay sesion
+        function abrirModalCrearGrupo() {
+            if (!currentUser) {
+                showToast('Debes iniciar sesion para crear un grupo', 'error');
+                setTimeout(() => {
+                    window.location.href = 'auth.html';
+                }, 1500);
+                return;
+            }
+            document.getElementById('createGroupModal').classList.add('active');
+        }
+
+        // Cerrar modal crear grupo
+        function cerrarModalCrearGrupo() {
+            document.getElementById('createGroupModal').classList.remove('active');
+            document.getElementById('createGroupForm').reset();
+        }
+
+        // Crear grupo
+        async function crearGrupo() {
+            if (!currentUser) return;
+
+            const nuevoGrupo = {
+                nombre: document.getElementById('groupName').value,
+                semestre: parseInt(document.getElementById('groupSemester').value),
+                profesor: document.getElementById('groupProfesor').value || null,
+                horario: document.getElementById('groupHorario').value,
+                ubicacion: document.getElementById('groupUbicacion').value,
+                descripcion: document.getElementById('groupDescripcion').value || null,
+                temas: document.getElementById('groupTemas').value || null,
+                participantes: 1,
+                creator_id: currentUser.id
+            };
+
+            try {
+                const { data, error } = await supabase
+                    .from('grupos')
+                    .insert([nuevoGrupo])
+                    .select()
+                    .single();
+
+                if (error) throw error;
+
+                gruposData.unshift(data);
+
+                await supabase.from('miembros_grupo').insert([{
+                    grupo_id: data.id,
+                    usuario_id: currentUser.id
+                }]);
+
+                // Agregar como miembro local
+                const miembros = JSON.parse(localStorage.getItem('fishub_miembros') || '[]');
+                miembros.push(data.id);
+                localStorage.setItem('fishub_miembros', JSON.stringify(miembros));
+
+                document.getElementById('statGrupos').textContent = gruposData.length;
+                cerrarModalCrearGrupo();
+                renderGrupos(currentFilter);
+                showToast('Grupo creado exitosamente!', 'success');
+
+            } catch (err) {
+                console.error('Error:', err);
+                showToast('Error al crear el grupo', 'error');
+            }
+        }
+
+        // Compartir grupo
+        function compartirGrupo() {
+            if (navigator.share && grupoSeleccionado) {
+                navigator.share({
+                    title: `Fishub - ${grupoSeleccionado.nombre}`,
+                    text: `Unete al grupo "${grupoSeleccionado.nombre}" en Fishub`,
+                    url: window.location.href
+                });
+            } else {
+                navigator.clipboard.writeText(window.location.href);
+                showToast('Enlace copiado', 'success');
+            }
+        }
+
+        // Renderizar biblioteca
+        // function renderBiblioteca(categoria) {
+        //     const filtrados = categoria === 'all' ? bibliotecaData : bibliotecaData.filter(r => r.categoria === categoria);
+        //     renderBibliotecaFiltrada(filtrados);
+        // }
+
+        // function renderBibliotecaFiltrada(recursos) {
+        //     const grid = document.getElementById('bibliotecaGrid');
+            
+        //     if (recursos.length === 0) {
+        //         grid.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;"><p>No se encontraron recursos</p></div>';
+        //         return;
+        //     }
+
+        //     grid.innerHTML = recursos.map(recurso => `
+        //         <div class="resource-card">
+        //             <div class="card-header">
+        //                 <span class="card-badge">${recurso.categoria.toUpperCase()}</span>
+        //                 <h3 class="card-title">${recurso.titulo}</h3>
+        //                 <p class="card-subtitle">${recurso.autor}</p>
+        //             </div>
+        //             <div class="card-body">
+        //                 <div class="card-info">
+        //                     <div class="info-item">
+        //                         <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        //                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+        //                         </svg>
+        //                         <span>${recurso.tipo} - ${recurso.tamano}</span>
+        //                     </div>
+        //                     <div class="info-item">
+        //                         <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        //                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+        //                         </svg>
+        //                         <span>${recurso.descargas} descargas</span>
+        //                     </div>
+        //                 </div>
+        //                 <p class="card-description">${recurso.descripcion}</p>
+        //             </div>
+        //             <div class="card-footer">
+        //                 <button class="btn-card btn-download" onclick="showToast('Descarga iniciada', 'success')">Descargar</button>
+        //                 <button class="btn-card btn-info" onclick="showToast('Vista previa no disponible', 'error')">Ver</button>
+        //             </div>
+        //         </div>
+        //     `).join('');
+        // }
+
+        // Renderizar cursos
+        async function cargarRecursos() {
+            try {
+                const { count, error } = await supabase
+                    .from('biblioteca')
+                    .select('*', { count: 'exact', head: true });
+
+                if (error) throw error;
+                
+                const cantidad = count || 0;
+                document.getElementById('statRecursos').textContent = cantidad;
+                document.getElementById('statRecursosBiblioteca').textContent = cantidad;
+            } catch (err) {
+                console.error('Error cargando recursos:', err);
+                document.getElementById('statRecursos').textContent = '0';
+                document.getElementById('statRecursosBiblioteca').textContent = '0';
+            }
+        }
+
+
+        // Cargar feedback
+        async function cargarFeedback() {
+            try {
+                const { data, error } = await supabase
+                    .from('feedback')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(10);
+
+                if (error) throw error;
+                renderFeedback(data || []);
+
+            } catch (err) {
+                console.error('Error:', err);
+                document.getElementById('feedbackList').innerHTML = '<div class="empty-state"><p>Error al cargar comentarios</p></div>';
+            }
+        }
+
+        // Renderizar feedback
+        function renderFeedback(feedbackData) {
+            const list = document.getElementById('feedbackList');
+
+            if (!feedbackData || feedbackData.length === 0) {
+                list.innerHTML = '<div class="empty-state"><p>Aun no hay comentarios. Se el primero!</p></div>';
+                return;
+            }
+
+            list.innerHTML = feedbackData.map(item => `
+                <div class="feedback-item">
+                    <div class="feedback-header">
+                        <span class="feedback-author">${item.nombre}</span>
+                        <span class="feedback-badge">${item.categoria}</span>
+                    </div>
+                    <p class="feedback-text">${item.mensaje}</p>
+                </div>
+            `).join('');
+        }
+
+        // Enviar feedback
+        async function enviarFeedback() {
+            const nombre = document.getElementById('feedbackName').value;
+            const semestre = document.getElementById('feedbackSemester').value;
+            const categoria = document.getElementById('feedbackCategory').value;
+            const mensaje = document.getElementById('feedbackMessage').value;
+
+            // Solo campos basicos que siempre existen en la tabla
+            const nuevoFeedback = {
+                nombre: nombre,
+                semestre: semestre,
+                categoria: categoria,
+                mensaje: mensaje
+            };
+
+            try {
+                const { data, error } = await supabase
+                    .from('feedback')
+                    .insert([nuevoFeedback])
+                    .select();
+
+                if (error) {
+                    console.error('Error enviando feedback:', error); // Changed from console.log to console.error
+                    throw error;
+                }
+
+                document.getElementById('feedbackForm').reset();
+                showToast('Gracias por tu feedback!', 'success');
+                await cargarFeedback();
+
+            } catch (err) {
+                console.error('Error al enviar feedback:', err);
+                showToast('Error al enviar feedback: ' + err.message, 'error');
+            }
+        }
+
+        // Toast
+        function showToast(message, type = '') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast show ' + type;
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+    </script>
+</body>
+</html>

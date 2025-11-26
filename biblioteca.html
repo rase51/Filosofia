@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biblioteca Virtual - Fishub</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary: #10b981;
+            --accent: #8b5cf6;
+            --accent-pink: #ec4899;
+            --background: #0a1628;
+            --background-alt: #1a2d4a;
+            --surface: #1e293b;
+            --surface-alt: #0f172a;
+            --text: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: rgba(59, 130, 246, 0.2);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, var(--background) 0%, var(--background-alt) 50%, var(--surface-alt) 100%);
+            min-height: 100vh;
+            color: var(--text);
+        }
+
+        /* Header */
+        .header {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .btn-back {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--primary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn-back:hover {
+            background: rgba(59, 130, 246, 0.2);
+            transform: translateX(-3px);
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo span {
+            color: var(--warning);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .user-name {
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        /* Main Container */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 40px;
+        }
+
+        /* Page Header */
+        .page-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .page-title {
+            font-size: 36px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .page-description {
+            color: var(--text-secondary);
+            font-size: 18px;
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 20px 30px;
+            background: linear-gradient(145deg, var(--surface) 0%, var(--surface-alt) 100%);
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            min-width: 150px;
+            border: 1px solid var(--border);
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        /* Search and Filters */
+        .search-filters {
+            background: linear-gradient(145deg, var(--surface) 0%, var(--surface-alt) 100%);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .search-input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 15px 20px 15px 50px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: var(--surface-alt);
+            color: var(--text);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .btn-upload {
+            padding: 15px 25px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-upload:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Category Tabs */
+        .category-tabs {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .category-tab {
+            padding: 10px 20px;
+            background: var(--surface-alt);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .category-tab:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .category-tab.active {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-color: transparent;
+            color: white;
+        }
+
+        /* Semester Filter */
+        .semester-filter {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: auto;
+        }
+
+        .semester-filter label {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .semester-select {
+            padding: 10px 15px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            background: var(--surface-alt);
+            color: var(--text);
+        }
+
+        /* Resources Grid */
+        .resources-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+        }
+
+        /* Resource Card */
+        .resource-card {
+            background: linear-gradient(145deg, var(--surface) 0%, var(--surface-alt) 100%);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--border);
+        }
+
+        .resource-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.4);
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+
+        .card-header {
+            padding: 25px 25px 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-badges {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-categoria {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+        }
+
+        .badge-semestre {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+        }
+
+        .badge-tipo {
+            background: rgba(139, 92, 246, 0.2);
+            color: #a78bfa;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .card-author {
+            color: var(--text-secondary);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .card-body {
+            padding: 20px 25px;
+            flex: 1;
+        }
+
+        .card-description {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .card-footer {
+            padding: 20px 25px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-stats {
+            display: flex;
+            gap: 15px;
+        }
+
+        .card-stat {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .btn-download {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-download:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-view {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-view:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+        }
+
+        /* Upload Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: linear-gradient(145deg, var(--surface) 0%, var(--surface-alt) 100%);
+            border-radius: 24px;
+            padding: 35px;
+            width: 90%;
+            max-width: 550px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.3s ease;
+        }
+
+        .btn-close:hover {
+            color: var(--error);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            background: var(--surface-alt);
+            color: var(--text);
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--surface-alt);
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--primary);
+            background: rgba(59, 130, 246, 0.15);
+        }
+
+        .upload-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 15px;
+            color: var(--primary);
+        }
+
+        .upload-text {
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+
+        .upload-text strong {
+            color: var(--primary);
+        }
+
+        .file-selected {
+            margin-top: 15px;
+            padding: 12px 16px;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 10px;
+            color: var(--success);
+            font-size: 14px;
+            display: none;
+        }
+
+        .file-selected.active {
+            display: block;
+        }
+
+        /* Progress bar */
+        .progress-container {
+            display: none;
+            margin-top: 15px;
+        }
+
+        .progress-container.active {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--surface-alt);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            margin-top: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            color: var(--text-muted);
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 16px 24px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 500;
+            z-index: 2000;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            background: linear-gradient(135deg, var(--success), #059669);
+        }
+
+        .toast.error {
+            background: linear-gradient(135deg, var(--error), #dc2626);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                padding: 15px 20px;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .main-container {
+                padding: 20px;
+            }
+
+            .page-title {
+                font-size: 28px;
+            }
+
+            .stats-bar {
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+
+            .stat-item {
+                min-width: 120px;
+                padding: 15px 20px;
+            }
+
+            .search-bar {
+                flex-direction: column;
+            }
+
+            .category-tabs {
+                justify-content: center;
+            }
+
+            .semester-filter {
+                margin-left: 0;
+                margin-top: 15px;
+            }
+
+            .resources-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <a href="index.html" class="btn-back">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Volver
+            </a>
+            <div class="logo">Fish<span>ub</span></div>
+        </div>
+        <div class="header-right">
+            <div class="user-info" id="userInfo" style="display: none;">
+                <div class="user-avatar" id="userAvatar">U</div>
+                <span class="user-name" id="userName">Usuario</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <div class="page-header">
+            <h1 class="page-title">Biblioteca Virtual</h1>
+            <p class="page-description">Explora y comparte recursos academicos con tu comunidad</p>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-number" id="totalRecursos">0</div>
+                <div class="stat-label">Total Recursos</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="totalDescargas">0</div>
+                <div class="stat-label">Descargas</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">4</div>
+                <div class="stat-label">Categorias</div>
+            </div>
+        </div>
+
+        <div class="search-filters">
+            <div class="search-bar">
+                <div class="search-input-wrapper">
+                    <svg class="search-icon" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="text" class="search-input" id="searchInput" placeholder="Buscar recursos por titulo, autor o descripcion...">
+                </div>
+                <button class="btn-upload" id="btnUpload">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Subir Recurso
+                </button>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                <div class="category-tabs">
+                    <button class="category-tab active" data-category="todos">Todos</button>
+                    <button class="category-tab" data-category="libros">Libros</button>
+                    <button class="category-tab" data-category="apuntes">Apuntes</button>
+                    <button class="category-tab" data-category="ejercicios">Ejercicios</button>
+                    <button class="category-tab" data-category="proyectos">Proyectos</button>
+                </div>
+                <div class="semester-filter">
+                    <label>Semestre:</label>
+                    <select class="semester-select" id="semesterFilter">
+                        <option value="todos">Todos</option>
+                        <option value="1">1er Semestre</option>
+                        <option value="2">2do Semestre</option>
+                        <option value="3">3er Semestre</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="resources-grid" id="resourcesGrid">
+            <div class="empty-state">
+                <svg class="empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                </svg>
+                <p>Cargando recursos...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal de subida -->
+    <div class="modal-overlay" id="uploadModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Subir Nuevo Recurso</h2>
+                <button class="btn-close" id="btnCloseModal">&times;</button>
+            </div>
+            <form id="uploadForm">
+                <div class="form-group">
+                    <label>Titulo del recurso *</label>
+                    <input type="text" class="form-input" id="resourceTitle" placeholder="Ej: Introduccion a la Programacion" required>
+                </div>
+                <div class="form-group">
+                    <label>Autor</label>
+                    <input type="text" class="form-input" id="resourceAuthor" placeholder="Nombre del autor">
+                </div>
+                <div class="form-group">
+                    <label>Descripcion</label>
+                    <textarea class="form-textarea" id="resourceDesc" placeholder="Breve descripcion del recurso..."></textarea>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Categoria *</label>
+                        <select class="form-select" id="resourceCategory" required>
+                            <option value="">Seleccionar</option>
+                            <option value="libros">Libros</option>
+                            <option value="apuntes">Apuntes</option>
+                            <option value="ejercicios">Ejercicios</option>
+                            <option value="proyectos">Proyectos</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Semestre *</label>
+                        <select class="form-select" id="resourceSemester" required>
+                            <option value="">Seleccionar</option>
+                            <option value="1">1er Semestre</option>
+                            <option value="2">2do Semestre</option>
+                            <option value="3">3er Semestre</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Archivo *</label>
+                    <div class="upload-area" id="uploadArea">
+                        <svg class="upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                        </svg>
+                        <p class="upload-text"><strong>Click para seleccionar</strong> o arrastra tu archivo</p>
+                        <p style="color: var(--text-muted); font-size: 12px; margin-top: 8px;">PDF, DOC, DOCX, PPT, ZIP (Max 50MB)</p>
+                    </div>
+                    <input type="file" id="fileInput" style="display: none;" accept=".pdf,.doc,.docx,.ppt,.pptx,.zip,.rar">
+                    <div class="file-selected" id="fileSelected"></div>
+                    <div class="progress-container" id="progressContainer">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <div class="progress-text" id="progressText">Subiendo... 0%</div>
+                    </div>
+                </div>
+                <button type="submit" class="btn-submit" id="btnSubmit">Subir Recurso</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Configuracion de Supabase
+        const SUPABASE_URL = 'https://cuanxvisilnzqkwatgou.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1YW54dmlzaWxuenFrd2F0Z291Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwOTQ0MDEsImV4cCI6MjA3OTY3MDQwMX0.EkoyQjv6tgPG_eJER4MS7gjvKju_sl6YiS-lvzkTqhY';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Variables globales
+        let currentUser = null;
+        let allResources = [];
+        let selectedFile = null;
+        let currentCategory = 'todos';
+        let currentSemester = 'todos';
+
+        // Inicializacion
+        document.addEventListener('DOMContentLoaded', () => {
+            checkUser();
+            loadResources();
+            initEventListeners();
+        });
+
+        // Verificar usuario
+        function checkUser() {
+            const savedUser = localStorage.getItem('fishub_user');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                document.getElementById('userInfo').style.display = 'flex';
+                document.getElementById('userAvatar').textContent = currentUser.nombre.charAt(0).toUpperCase();
+                document.getElementById('userName').textContent = currentUser.nombre;
+            }
+        }
+
+        // Cargar recursos
+        async function loadResources() {
+            try {
+                const { data, error } = await supabase
+                    .from('biblioteca')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                allResources = data || [];
+                document.getElementById('totalRecursos').textContent = allResources.length;
+                
+                // Calcular descargas totales
+                const totalDescargas = allResources.reduce((sum, r) => sum + (r.descargas || 0), 0);
+                document.getElementById('totalDescargas').textContent = totalDescargas;
+
+                renderResources();
+            } catch (err) {
+                console.error('Error cargando recursos:', err);
+                showToast('Error al cargar recursos', 'error');
+            }
+        }
+
+        // Renderizar recursos
+        function renderResources() {
+            const grid = document.getElementById('resourcesGrid');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+            let filtered = allResources.filter(resource => {
+                const matchCategory = currentCategory === 'todos' || resource.categoria === currentCategory;
+                const matchSemester = currentSemester === 'todos' || resource.semestre === currentSemester;
+                const matchSearch = !searchTerm || 
+                    resource.titulo.toLowerCase().includes(searchTerm) ||
+                    (resource.autor && resource.autor.toLowerCase().includes(searchTerm)) ||
+                    (resource.descripcion && resource.descripcion.toLowerCase().includes(searchTerm));
+                return matchCategory && matchSemester && matchSearch;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <svg class="empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <p>No se encontraron recursos</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(resource => `
+                <div class="resource-card">
+                    <div class="card-header">
+                        <div class="card-badges">
+                            <span class="badge badge-categoria">${resource.categoria}</span>
+                            <span class="badge badge-semestre">${resource.semestre}° Sem</span>
+                            ${resource.tipo ? `<span class="badge badge-tipo">${resource.tipo}</span>` : ''}
+                        </div>
+                        <h3 class="card-title">${resource.titulo}</h3>
+                        ${resource.autor ? `<p class="card-author"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg> ${resource.autor}</p>` : ''}
+                    </div>
+                    <div class="card-body">
+                        <p class="card-description">${resource.descripcion || 'Sin descripcion'}</p>
+                    </div>
+                    <div class="card-footer">
+                        <div class="card-stats">
+                            <span class="card-stat">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                </svg>
+                                ${resource.descargas || 0} descargas
+                            </span>
+                        </div>
+                        <button class="btn-download" onclick="downloadResource(${resource.id}, '${resource.archivo_url || ''}', '${resource.titulo}')">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                            Descargar
+                        </button>
+                        ${resource.archivo_url ? `
+                        <button class="btn-view" onclick="viewResource('${resource.archivo_url}', '${resource.titulo}')" style="background: linear-gradient(135deg, #8b5cf6, #a78bfa); color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; transition: all 0.3s;">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                            Visualizar
+                        </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Descargar recurso
+        async function downloadResource(id, url, titulo) {
+            if (!url) {
+                showToast('Este recurso no tiene archivo disponible', 'error');
+                return;
+            }
+
+            try {
+                // Incrementar contador de descargas
+                await supabase
+                    .from('biblioteca')
+                    .update({ descargas: supabase.sql`descargas + 1` })
+                    .eq('id', id);
+
+                // Descargar archivo
+                const response = await fetch(url);
+                const blob = await response.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = titulo;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(downloadUrl);
+
+                showToast('Descarga iniciada', 'success');
+                loadResources(); // Recargar para actualizar contador
+            } catch (err) {
+                console.error('Error descargando:', err);
+                // Abrir en nueva ventana como fallback
+                window.open(url, '_blank');
+            }
+        }
+
+        // Visualizar recurso
+        function viewResource(url, titulo) {
+            if (url) {
+                window.open(url, '_blank');
+            } else {
+                showToast('Este recurso no tiene archivo para visualizar', 'error');
+            }
+        }
+
+        // Event listeners
+        function initEventListeners() {
+            // Busqueda
+            document.getElementById('searchInput').addEventListener('input', renderResources);
+
+            // Filtros de categoria
+            document.querySelectorAll('.category-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    currentCategory = tab.dataset.category;
+                    renderResources();
+                });
+            });
+
+            // Filtro de semestre
+            document.getElementById('semesterFilter').addEventListener('change', (e) => {
+                currentSemester = e.target.value;
+                renderResources();
+            });
+
+            // Modal de subida
+            document.getElementById('btnUpload').addEventListener('click', () => {
+                if (!currentUser) {
+                    showToast('Debes iniciar sesion para subir recursos', 'error');
+                    return;
+                }
+                document.getElementById('uploadModal').classList.add('active');
+            });
+
+            document.getElementById('btnCloseModal').addEventListener('click', () => {
+                document.getElementById('uploadModal').classList.remove('active');
+                resetForm();
+            });
+
+            document.getElementById('uploadModal').addEventListener('click', (e) => {
+                if (e.target.id === 'uploadModal') {
+                    document.getElementById('uploadModal').classList.remove('active');
+                    resetForm();
+                }
+            });
+
+            // Area de subida
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+
+            uploadArea.addEventListener('click', () => fileInput.click());
+
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                if (e.dataTransfer.files.length) {
+                    handleFileSelect(e.dataTransfer.files[0]);
+                }
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length) {
+                    handleFileSelect(e.target.files[0]);
+                }
+            });
+
+            // Formulario
+            document.getElementById('uploadForm').addEventListener('submit', handleUpload);
+        }
+
+        // Manejar seleccion de archivo
+        function handleFileSelect(file) {
+            const maxSize = 50 * 1024 * 1024; // 50MB
+            if (file.size > maxSize) {
+                showToast('El archivo excede el limite de 50MB', 'error');
+                return;
+            }
+
+            selectedFile = file;
+            const fileSelected = document.getElementById('fileSelected');
+            fileSelected.textContent = `Archivo seleccionado: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+            fileSelected.classList.add('active');
+        }
+
+        // Sanitizar nombre de archivo
+        function sanitizarNombreArchivo(nombre) {
+            return nombre
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-zA-Z0-9._-]/g, '_')
+                .replace(/_+/g, '_')
+                .substring(0, 100);
+        }
+
+        // Subir recurso
+        async function handleUpload(e) {
+            e.preventDefault();
+
+            if (!selectedFile) {
+                showToast('Debes seleccionar un archivo', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('btnSubmit');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+
+            btn.disabled = true;
+            btn.textContent = 'Subiendo...';
+            progressContainer.classList.add('active');
+
+            try {
+                // Simular progreso
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    progress += 10;
+                    if (progress <= 90) {
+                        progressFill.style.width = progress + '%';
+                        progressText.textContent = `Subiendo... ${progress}%`;
+                    }
+                }, 200);
+
+                // Subir archivo a Supabase Storage
+                const fileName = `${Date.now()}_${sanitizarNombreArchivo(selectedFile.name)}`;
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('biblioteca')
+                    .upload(fileName, selectedFile);
+
+                clearInterval(progressInterval);
+
+                if (uploadError) throw uploadError;
+
+                progressFill.style.width = '95%';
+                progressText.textContent = 'Guardando informacion...';
+
+                // Obtener URL publica
+                const { data: urlData } = supabase.storage
+                    .from('biblioteca')
+                    .getPublicUrl(fileName);
+
+                // Guardar en base de datos
+                const newResource = {
+                    titulo: document.getElementById('resourceTitle').value,
+                    autor: document.getElementById('resourceAuthor').value || null,
+                    descripcion: document.getElementById('resourceDesc').value || null,
+                    categoria: document.getElementById('resourceCategory').value,
+                    semestre: document.getElementById('resourceSemester').value,
+                    archivo_url: urlData.publicUrl,
+                    tipo: selectedFile.name.split('.').pop().toUpperCase(),
+                    descargas: 0
+                };
+
+                const { error: insertError } = await supabase
+                    .from('biblioteca')
+                    .insert([newResource]);
+
+                if (insertError) throw insertError;
+
+                progressFill.style.width = '100%';
+                progressText.textContent = 'Completado!';
+
+                showToast('Recurso subido exitosamente', 'success');
+                document.getElementById('uploadModal').classList.remove('active');
+                resetForm();
+                loadResources();
+
+            } catch (err) {
+                console.error('Error subiendo recurso:', err);
+                showToast('Error al subir el recurso: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Subir Recurso';
+                progressContainer.classList.remove('active');
+                progressFill.style.width = '0%';
+            }
+        }
+
+        // Resetear formulario
+        function resetForm() {
+            document.getElementById('uploadForm').reset();
+            selectedFile = null;
+            document.getElementById('fileSelected').classList.remove('active');
+            document.getElementById('progressContainer').classList.remove('active');
+            document.getElementById('progressFill').style.width = '0%';
+        }
+
+        // Toast
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+    </script>
+</body>
+</html>

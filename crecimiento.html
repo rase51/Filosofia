@@ -1,0 +1,1815 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa de Crecimiento Personal - Fishub</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a1628 0%, #1a2d4a 50%, #0f2035 100%);
+            min-height: 100vh;
+            color: #e2e8f0;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #3b82f6;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn-back {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-back:hover {
+            background: rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-unlock {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-unlock:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-unlock.completed {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        /* Progress indicator */
+        .progress-bar-container {
+            position: fixed;
+            top: 70px;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: rgba(59, 130, 246, 0.2);
+            z-index: 99;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        /* Main container */
+        .main-container {
+            padding-top: 100px;
+            padding-bottom: 4rem;
+        }
+
+        /* Intro section */
+        .intro-section {
+            text-align: center;
+            padding: 3rem 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .intro-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+        }
+
+        .intro-subtitle {
+            font-size: 1.2rem;
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #60a5fa;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+
+        /* Timeline container */
+        .timeline-container {
+            position: relative;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .timeline-line {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%);
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+
+        @media (max-width: 768px) {
+            .timeline-line {
+                left: 30px;
+            }
+        }
+
+        /* Card del timeline */
+        .timeline-card {
+            position: relative;
+            width: calc(50% - 40px);
+            margin-bottom: 3rem;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .timeline-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .timeline-card.unlocked {
+            opacity: 1 !important;
+            transform: translateY(0) !important;
+        }
+
+        .timeline-card:nth-child(odd) {
+            margin-left: auto;
+            margin-right: calc(50% + 40px);
+        }
+
+        .timeline-card:nth-child(even) {
+            margin-left: calc(50% + 40px);
+        }
+
+        @media (max-width: 768px) {
+            .timeline-card,
+            .timeline-card:nth-child(odd),
+            .timeline-card:nth-child(even) {
+                width: calc(100% - 70px);
+                margin-left: 60px;
+                margin-right: 0;
+            }
+        }
+
+        /* Punto en el timeline */
+        .timeline-dot {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: #1e293b;
+            border: 4px solid #3b82f6;
+            border-radius: 50%;
+            top: 30px;
+            z-index: 10;
+            transition: all 0.3s ease;
+        }
+
+        .timeline-card:nth-child(odd) .timeline-dot {
+            right: -52px;
+        }
+
+        .timeline-card:nth-child(even) .timeline-dot {
+            left: -52px;
+        }
+
+        @media (max-width: 768px) {
+            .timeline-dot {
+                left: -42px !important;
+                right: auto !important;
+            }
+        }
+
+        .timeline-card.completed .timeline-dot {
+            background: #10b981;
+            border-color: #10b981;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
+        }
+
+        /* Contenido de la card infografia */
+        .infographic-card {
+            background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .timeline-card.completed .infographic-card {
+            border-color: rgba(16, 185, 129, 0.4);
+        }
+
+        .infographic-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+
+        /* Header de la card */
+        .card-header-infographic {
+            padding: 1.5rem;
+            background: linear-gradient(135deg, var(--card-color-1) 0%, var(--card-color-2) 100%);
+            position: relative;
+        }
+
+        .etapa-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.3rem 0.8rem;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .card-title-infographic {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-subtitle-infographic {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Body de la card */
+        .card-body-infographic {
+            padding: 1.5rem;
+        }
+
+        /* Seccion antes/despues */
+        .before-after {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .before-box, .after-box {
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .before-box {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .after-box {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .box-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        .before-box .box-label {
+            color: #f87171;
+        }
+
+        .after-box .box-label {
+            color: #34d399;
+        }
+
+        .box-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .box-text {
+            font-size: 0.85rem;
+            color: #cbd5e1;
+        }
+
+        /* Checklist */
+        .checklist {
+            margin-bottom: 1.5rem;
+        }
+
+        .checklist-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #60a5fa;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+
+        .checklist-icon {
+            color: #10b981;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        /* Tips boxes */
+        .tips-container {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .tip-box {
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            font-size: 0.8rem;
+        }
+
+        .tip-error {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 3px solid #ef4444;
+            color: #fca5a5;
+        }
+
+        .tip-success {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 3px solid #10b981;
+            color: #6ee7b7;
+        }
+
+        .tip-label {
+            font-weight: 600;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+            display: block;
+        }
+
+        .tip-error .tip-label {
+            color: #f87171;
+        }
+
+        .tip-success .tip-label {
+            color: #34d399;
+        }
+
+        /* Boton Ver mas y contenido expandido */
+        .btn-ver-mas {
+            width: 100%;
+            padding: 0.75rem;
+            margin-top: 1rem;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px dashed rgba(59, 130, 246, 0.4);
+            color: #60a5fa;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-ver-mas:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.6);
+        }
+
+        .btn-ver-mas svg {
+            transition: transform 0.3s ease;
+        }
+
+        .btn-ver-mas.expanded svg {
+            transform: rotate(180deg);
+        }
+
+        .contenido-expandido {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease, padding 0.3s ease;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 12px;
+            margin-top: 0;
+        }
+
+        .contenido-expandido.visible {
+            max-height: 2000px;
+            margin-top: 1rem;
+            padding: 1.25rem;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .caso-estudio {
+            margin-bottom: 1.5rem;
+        }
+
+        .caso-titulo {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #f472b6;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .caso-contenido {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1rem;
+            border-radius: 10px;
+            border-left: 3px solid #f472b6;
+        }
+
+        .caso-personaje {
+            font-weight: 600;
+            color: #e2e8f0;
+            margin-bottom: 0.5rem;
+        }
+
+        .caso-problema {
+            color: #f87171;
+            font-size: 0.85rem;
+            margin-bottom: 0.75rem;
+            padding: 0.5rem;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 6px;
+        }
+
+        .caso-solucion {
+            color: #34d399;
+            font-size: 0.85rem;
+            padding: 0.5rem;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 6px;
+        }
+
+        .tecnicas-detalladas {
+            margin-bottom: 1.5rem;
+        }
+
+        .tecnicas-titulo {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #60a5fa;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tecnica-item {
+            background: rgba(59, 130, 246, 0.1);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 0.75rem;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .tecnica-nombre {
+            font-weight: 600;
+            color: #93c5fd;
+            margin-bottom: 0.5rem;
+        }
+
+        .tecnica-descripcion {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            line-height: 1.5;
+        }
+
+        .recursos-adicionales {
+            background: rgba(139, 92, 246, 0.1);
+            padding: 1rem;
+            border-radius: 10px;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        .recursos-titulo {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #a78bfa;
+            margin-bottom: 0.75rem;
+        }
+
+        .recurso-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #c4b5fd;
+            font-size: 0.8rem;
+            padding: 0.4rem 0;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .recurso-link:hover {
+            color: #e9d5ff;
+        }
+
+        /* Footer de la card */
+        .card-footer-infographic {
+            padding: 1rem 1.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .completion-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        .completion-badge.done {
+            color: #10b981;
+        }
+
+        .btn-mark-complete {
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-mark-complete:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-mark-complete.completed {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            cursor: default;
+        }
+
+        /* Final section */
+        .final-section {
+            text-align: center;
+            padding: 4rem 2rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .final-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .final-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #f472b6;
+            margin-bottom: 1rem;
+        }
+
+        .final-text {
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            background: #1e293b;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            border-color: rgba(16, 185, 129, 0.5);
+        }
+
+        /* Locked overlay */
+        .locked-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 20px;
+            z-index: 5;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .timeline-card.locked .locked-overlay {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .locked-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .locked-text {
+            font-size: 0.9rem;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">Fishub</div>
+        <div class="header-actions">
+            <a href="index.html" class="btn-back">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Volver al inicio
+            </a>
+            <button class="btn-unlock" id="btnUnlock" onclick="toggleUnlockAll()">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/>
+                </svg>
+                <span id="unlockText">Desbloquear todo</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Progress bar -->
+    <div class="progress-bar-container">
+        <div class="progress-bar-fill" id="progressBarFill"></div>
+    </div>
+
+    <!-- Main content -->
+    <main class="main-container">
+        <!-- Intro -->
+        <section class="intro-section">
+            <h1 class="intro-title">Tu Camino de Crecimiento Personal</h1>
+            <p class="intro-subtitle">
+                Explora cada etapa de tu desarrollo como estudiante universitario. 
+                Avanza por el camino, aprende de los errores comunes y descubre como transformarte.
+            </p>
+            <div class="stats-row">
+                <div class="stat-item">
+                    <div class="stat-number" id="etapasCompletadas">0</div>
+                    <div class="stat-label">Etapas completadas</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">6</div>
+                    <div class="stat-label">Etapas totales</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="porcentajeProgreso">0%</div>
+                    <div class="stat-label">Progreso</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Timeline -->
+        <div class="timeline-container">
+            <div class="timeline-line"></div>
+            
+            <!-- Etapa 1: Gestion del Tiempo -->
+            <div class="timeline-card" data-etapa="1">
+                <div class="timeline-dot"></div>
+                <div class="infographic-card" style="--card-color-1: #3b82f6; --card-color-2: #1d4ed8;">
+                    <div class="card-header-infographic">
+                        <div class="etapa-badge">
+                            <svg width="12" height="12" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 8.414l-3.293 3.293a1 1 0 01-1.414-1.414L9 9.586V5a1 1 0 112 0v5.414z"/>
+                            </svg>
+                            Etapa 1
+                        </div>
+                        <h3 class="card-title-infographic">Gestion del Tiempo</h3>
+                        <p class="card-subtitle-infographic">Domina tu recurso mas valioso</p>
+                    </div>
+                    <div class="card-body-infographic">
+                        <div class="before-after">
+                            <div class="before-box">
+                                <div class="box-label">Antes</div>
+                                <div class="box-icon">😰</div>
+                                <div class="box-text">Entregas a ultima hora, estres constante</div>
+                            </div>
+                            <div class="after-box">
+                                <div class="box-label">Despues</div>
+                                <div class="box-icon">😌</div>
+                                <div class="box-text">Planificacion clara, tiempo libre real</div>
+                            </div>
+                        </div>
+                        <div class="checklist">
+                            <div class="checklist-title">
+                                <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                                    <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                </svg>
+                                Cambios clave
+                            </div>
+                            <div class="checklist-item">
+                                <span class="checklist-icon">✓</span>
+                                <span>Usa bloques de tiempo de 25 min (Pomodoro)</span>
+                            </div>
+                            <div class="checklist-item">
+                                <span class="checklist-icon">✓</span>
+                                <span>Planifica tu semana cada domingo</span>
+                            </div>
+                            <div class="checklist-item">
+                                <span class="checklist-icon">✓</span>
+                                <span>Prioriza tareas con la matriz de Eisenhower</span>
+                            </div>
+                        </div>
+                        <div class="tips-container">
+                            <div class="tip-box tip-error">
+                                <span class="tip-label">Error comun</span>
+                                Creer que "trabajo mejor bajo presion"
+                            </div>
+                            <div class="tip-box tip-success">
+                                <span class="tip-label">Que hacer</span>
+                                Dividir tareas grandes en pasos pequenos y empezar temprano
+                            </div>
+                        </div>
+
+                        <!-- Boton Ver mas -->
+                        <button class="btn-ver-mas" onclick="toggleExpand(1)">
+                            <span>Ver mas informacion</span>
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+
+                        <!-- Contenido expandido -->
+                        <div class="contenido-expandido" id="expand-1">
+                            <div class="caso-estudio">
+                                <div class="caso-titulo">
+                                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
+                                    </svg>
+                                    Caso Real: Carlos, 2do semestre
+                                </div>
+                                <div class="caso-contenido">
+                                    <div class="caso-personaje">Carlos estudiaba Ing. de Sistemas y trabajaba medio tiempo.</div>
+                                    <div class="caso-problema"><strong>Problema:</strong> Siempre entregaba trabajos incompletos a las 11:59pm. Dormia 4 horas y su rendimiento caia cada vez mas. Reprobo 2 cursos por no entregar proyectos.</div>
+                                    <div class="caso-solucion"><strong>Solucion:</strong> Empezo a usar Google Calendar para bloquear 2 horas diarias de estudio. Aplico la regla de los 2 minutos: si algo toma menos de 2 min, hazlo ya. En un mes, su promedio subio de 11 a 15.</div>
+                                </div>
+                            </div>
+                            <div class="tecnicas-detalladas">
+                                <div class="tecnicas-titulo">
+                                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/>
+                                    </svg>
+                                    Tecnicas Avanzadas
+                                </div>
+                                <div class="tecnica-item">
+                                    <div class="tecnica-nombre">Tecnica Pomodoro Modificada</div>
+                                    <div class="tecnica-descripcion">25 min de trabajo intenso + 5 min de descanso. Despues de 4 pomodoros, descansa 25 min. Ideal para programacion: un pomodoro = una funcion o modulo.</div>
+                                </div>
+                                <div class="tecnica-item">
+                                    <div class="tecnica-nombre">Matriz de Eisenhower para Estudiantes</div>
+                                    <div class="tecnica-descripcion">Urgente + Importante = Examenes manana. Importante + No urgente = Proyectos a largo plazo (dedica 60% aqui). Urgente + No importante = Delega o hazlo rapido. Ni urgente ni importante = Elimina (redes sociales).</div>
+                                </div>
+                                <div class="tecnica-item">
+                                    <div class="tecnica-nombre">Time Blocking Academico</div>
+                                    <div class="tecnica-descripcion">Lunes/Miercoles: Matematicas y logica. Martes/Jueves: Programacion practica. Viernes: Revision y dudas. Fines de semana: Proyectos grandes. Nunca mezcles materias en el mismo bloque.</div>
+                                </div>
+                            </div>
+                            <div class="recursos-adicionales">
+                                <div class="recursos-titulo">Herramientas Recomendadas</div>
+                                <a href="https://todoist.com" target="_blank" class="recurso-link">
+                                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"/></svg>
+                                    Todoist - Gestion de tareas gratuito
+                                </a>
+                                <a href="https://notion.so" target="_blank" class="recurso-link">
+                                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"/></svg>
+                                    Notion - Sistema todo-en-uno para estudiantes
+                                </a>
+                                <a href="https://pomofocus.io" target="_blank" class="recurso-link">
+                                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"/></svg>
+                                    Pomofocus - Timer Pomodoro online
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer-infographic">
+                        <div class="completion-badge" id="badge-1">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span>5 min de lectura</span>
+                        </div>
+                        <button class="btn-mark-complete" id="btn-1" onclick="marcarCompletado(1)">Completar</button>
+                    </div>
+                </div>
+                <div class="locked-overlay">
+                    <div class="locked-icon">🔒</div>
+                    <div class="locked-text">Completa la etapa anterior</div>
+                </div>
+            </div>
+
+            <!-- Etapa 2: Habitos de Estudio -->
+            <div class="timeline-card" data-etapa="2">
+                <div class="timeline-dot"></div>
+                <div class="infographic-card" style="--card-color-1: #8b5cf6; --card-color-2: #6d28d9;">
+                    <div class="card-header-infographic">
+                        <div class="etapa-badge">
+                            <svg width="12" height="12" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"/>
+                            </svg>
+                            Etapa 2
+                        </div>
+                        <h3 class="card-title-infographic">Habitos de Estudio</h3>
+                        <p class="card-subtitle-infographic">Aprende a aprender efectivamente</p>
+                    </div>
+                    <div class="card-body-infographic">
+                        <div class="before-after">
+                            <div class="before-box">
+                                <div class="box-label">Antes</div>
+                                <div class="box-icon">📚</div>
+                                <div class="box-text">Releer apuntes sin entender</div>
+                            </div>
+                            <div class="after-box">
+                                <div class="box-label">Despues</div>
+                                <div class="box-icon">🧠</div>
+                                <div class="box-text">Aprendizaje activo y retencion real</div>
+                            </div>
+                        </div>
+                        <div class="checklist">
+                            <div class="checklist-title">
+                                <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                                    <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                </svg>
+                                Cambios clave
+                            </div>
+                            <div class="checklist-item">
+                                <span class="checklist-icon">✓</span>
+                                <span>Usa el metodo Feynman: explica en simple</span>
+                            </div>
+                            <div class="checklist-item">
+                                <span class="checklist-icon">✓</span>
+                                <span>Practica activa > lectura pasiva</span>
+                            </div>
+                            <div class="checklist-item">
+                                <span class="checklist-icon">✓</span>
+                                <span>Repasa con espaciado (spaced repetition)</span>
+                            </div>
+                        </div>
+                        <div class="tips-container">
+                            <div class="tip-box tip-error">
+                                <span class="tip-label">Error comun</span>
+                                Subrayar todo el texto sin procesar la informacion
+                            </div>
+                            <div class="tip-box tip-success">
+                                <span class="tip-label">Que hacer</span>
+                                Crear mapas mentales y hacerte preguntas sobre el tema
+                            </div>
+                        </div>
+
+                        <button class="btn-ver-mas" onclick="toggleExpand(2)">
+                            <span>Ver mas informacion</span>
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+
+                        <div class="contenido-expandido" id="expand-2">
+                            <div class="caso-estudio">
+                                <div class="caso-titulo">
+                                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
+                                    </svg>
+                                    Caso Real: Maria, 1er semestre
+                                </div>
+                                <div class="caso-contenido">
+                                    <div class="caso-personaje">Maria venia del colegio con promedios de 18, pero la universidad la golpeo fuerte.</div>
+                                    <div class="caso-problema"><strong>Problema:</strong> Estudiaba 6 horas seguidas antes de cada examen, subrayando todo. Resultado: olvidaba todo en 2 dias y sus notas bajaron a 10-12. Se sentia "tonta" cuando en realidad su metodo era el problema.</div>
+                                    <div class="caso-solucion"><strong>Solucion:</strong> Adopto el metodo Feynman: despues de cada clase, explicaba el tema en voz alta como si ensenara a un nino de 10 anos. Creo flashcards en Anki para repasar 15 min diarios. En el siguiente parcial, saco 17.</div>
+                                </div>
+                            </div>
+                            <div class="tecnicas-detalladas">
+                                <div class="tecnicas-titulo">
+                                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/>
+                                    </svg>
+                                    Tecnicas Avanzadas
+                                </div>
+                                <div class="tecnica-item">
+                                    <div class="tecnica-nombre">Metodo Feynman para Programacion</div>
+                                    <div class="tecnica-descripcion">1) Elige un concepto (ej: recursividad). 2) Explicalo en papel como si tu abuela lo entendiera. 3) Identifica donde te trabas. 4) Vuelve al material y simplifica. Si no puedes explicarlo simple, no lo entiendes.</div>
+                                </div>
+                                <div class="tecnica-item">
+                                    <div class="tecnica-nombre">Spaced Repetition con Anki</div>
+                                    <div class="tecnica-descripcion">Crea flashcards despues de cada clase. Anki te muestra las tarjetas justo antes de olvidarlas. 15 min/dia = retencion del 90% a largo plazo. Ideal para sintaxis, algoritmos y conceptos teoricos.</div>
+                                </div>
+                                <div class="tecnica-item">
+                                    <div class="tecnica-nombre">Active Recall para Examenes</div>
+                                    <div class="tecnica-descripcion">No releas. Cierra el libro e intenta recordar todo lo que puedas. Escribe preguntas tipo examen y respondelas sin ver apuntes. Lo que no recuerdas = lo que debes repasar. Efectividad 3x mayor que solo leer.</div>
+                                </div>
+                            </div>
+                            <div class="recursos-adicionales">
+                                <div class="recursos-titulo">Herramientas Recomendadas</div>
+                                <a href="https://apps.ankiweb.net" target="_blank" class="recurso-link">
+                                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"/></svg>
+                                    Anki - Flashcards con repeticion espaciada
+                                </a>
+                                <a href="https://obsidian.md" target="_blank" class="recurso-link">
+                                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"/></svg>
+                                    Obsidian - Notas conectadas tipo wiki
+                                </a>
+                                <a href="https://excalidraw.com" target="_blank" class="recurso-link">
+                                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"/></svg>
+                                    Excalidraw - Diagramas y mapas mentales
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer-infographic">
+                        <div class="completion-badge" id="badge-2">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span>5 min de lectura</span>
+                        </div>
+                        <button class="btn-mark-complete" id="btn-2" onclick="marcarCompletado(2)">Completar</button>
+                    </div>
+                </div>
+                <div class="locked-overlay">
+                    <div class="locked-icon">🔒</div>
+                    <div class="locked-text">Completa la etapa anterior</div>
+                </div>
+            </div>
+
+            <!-- Etapa 3: Comunicacion Efectiva -->
+            <div class="timeline-card" data-etapa="3">
+                <div class="timeline-dot"></div>
+                <div class="infographic-card" style="--card-color-1: #ec4899; --card-color-2: #be185d;">
+                    <div class="card-header-infographic">
+                        <div class="etapa-badge">
+                            <svg width="12" height="12" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"/>
+                            </svg>
+                            Etapa 3
+                        </div>
+                        <h3 class="card-title-infographic">Comunicacion Efectiva</h3>
+                        <p class="card-subtitle-infographic">Expresa tus ideas con claridad</p>
+                    </div>
+                    <div class="card-body-infographic">
+                        <div class="before-after">
+                            <div class="before-box">
+                                <div class="box-label">Antes</div>
+                                <div class="box-icon">🤐</div>
+                                <div class="box-text">Miedo a participar, ideas confusas</div>
+                            </div>
+                            <div class="after-box">
+                                <div class="box-label">Despues</div>
+                                <div class="box-icon">🎤</div>
+                                <div class="box-text">Confianza al exponer, mensajes claros</div>
+                            </div>
+                        </div>
+                        <div class="checklist">
+                            <div class="checklist-title">
+                                <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                                    <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                </svg>
+                                Cambios clave
+                            </div>
+                            <div class="checklist-item">
+                                <span class="checklist-icon">✓</span>
+                                <span>Estructura: introduccion, desarrollo, conclusion</span>
+                            </div>
+                            <div class="checklist-item">
+                                <span class="checklist-icon">✓</span>
+                                <span>Practica frente al espejo o grabandote</span>
+                            </div>
+                            <div class="checklist-item">
+                                <span class="checklist-icon">✓</span>
+                                <span>Escucha activa: entiende antes de responder</span>
+                            </div>
+                        </div>
+                        <div class="tips-container">
+                            <div class="tip-box tip-error">
+                                <span class="tip-label">Error comun</span>
+                                Memorizar presentaciones palabra por palabra
+                            </div>
+                            <div class="tip-box tip-success">
+                                <span class="tip-label">Que hacer</span>
+                                Domina los conceptos clave y habla con naturalidad
+                            </div>
+                        </div>
+
+                        <button class="btn-ver-mas" onclick="toggleExpand(3)">
+                            <span>Ver mas informacion</span>
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+
+                        <div class="contenido-expandido" id="expand-3">
+                            <div class="caso-estudio">
+                                <div class="caso-titulo">
+                                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
+                                    </svg>
+                                    Caso Real: Luis, 3er semestre
+                                </div>
+                                <div class="caso-contenido">
+                                    <div class="caso-personaje">Luis era excelente programando pero le aterraba exponer. Temblaba y sudaba.</div>
+                                    <div class="caso-problema"><strong>Problema:</strong> En su proyecto de Ingenieria de Software, su codigo era el mejor del grupo pero su presentacion fue un desastre. El profesor le bajo 4 puntos por "no saber comunicar su trabajo". Se sentia frustrado porque su esfuerzo no se reflejaba.</div>
+                                    <div class="caso-solucion"><strong>Solucion:</strong> Empezo a grabarse presentando con su celular. Al principio era incomodo, pero identifico sus muletillas ("este...", "o sea"). Practico la tecnica 10-20-30: 10 slides, 20 minutos, fuente 30pts. En la siguiente expo, el profesor destaco su claridad.</div>
+                                </div>
+                            </div>
+                            <div class="tecnicas-detalladas">
+                                <div class="tecnicas-titulo">
+                                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/>
+                                    </svg>
+                                    Tecnicas Avanzadas
+                                </div>
+                                <div class="tecnica-item">
+                                    <div class="tecnica-nombre">Regla 10-20-30 de Guy Kawasaki</div>
+                                    <div class="tecnica-descripcion">10 slides maximo, 20 minutos de presentacion, fuente minima de 30 puntos. Esto te obliga a ser conciso y legible. Menos slides = mas impacto. El publico recuerda 3 ideas, no 30.</div>
+                                </div>
+                                <div class="tecnica-item">
+                                    <div class="tecnica-nombre">Estructura PREP para Respuestas</div>
+                                    <div class="tecnica-descripcion">Point (tu punto principal), Reason (por que), Example (ejemplo concreto), Point (repite el punto). Ideal para preguntas en clase o entrevistas. "Creo que Python es mejor para principiantes porque su sintaxis es simple. Por ejemplo, un Hello World es una linea. Por eso recomiendo Python."</div>
+                                </div>
+                                <div class="tecnica-item">
+                                    <div class="tecnica-nombre">Tecnica del Espejo + Grabacion</div>
+                                    <div class="tecnica-descripcion">Dia 1: Presenta frente al espejo, nota tu lenguaje corporal. Dia 2: Grabate con el celular, identifica muletillas. Dia 3: Presenta a un amigo o familiar. Dia 4: Ajusta y practica una vez mas. 4 dias de practica = presentacion profesional.</div>
+                                </div>
+                            </div>
+                            <div class="recursos-adicionales">
+                                <div class="recursos-titulo">Herramientas Recomendadas</div>
+                                <a href="https://www.canva.com" target="_blank" class="recurso-link">
+                                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"/></svg>
+                                    Canva - Presentaciones visuales profesionales
+                                </a>
+                                <a href="https://www.loom.com" target="_blank" class="recurso-link">
+                                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"/></svg>
+                                    Loom - Graba y comparte presentaciones
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer-infographic">
+                        <div class="completion-badge" id="badge-3">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span>5 min de lectura</span>
+                        </div>
+                        <button class="btn-mark-complete" id="btn-3" onclick="marcarCompletado(3)">Completar</button>
+                    </div>
+                </div>
+                <div class="locked-overlay">
+                    <div class="locked-icon">🔒</div>
+                    <div class="locked-text">Completa la etapa anterior</div>
+                </div>
+            </div>
+
+            <!-- Etapa 4: Trabajo en Equipo -->
+            <div class="timeline-card" data-etapa="4">
+                <div class="timeline-dot"></div>
+                <div class="infographic-card" style="--card-color-1: #f59e0b; --card-color-2: #d97706;">
+                    <div class="card-header-infographic">
+                        <div class="etapa-badge">
+                            <svg width="12" height="12" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/>
+                            </svg>
+                            Etapa 4
+                        </div>
+                        <h3 class="card-title-infographic">Trabajo en Equipo</h3>
+                        <p class="card-subtitle-infographic">Colabora y lidera proyectos grupales</p>
+                    </div>
+                    <div class="card-body-infographic">
+                        <div class="before-after">
+                            <div class="before-box">
+                                <div class="box-label">Antes</div>
+                                <div class="box-icon">😤</div>
+                                <div class="box-text">Conflictos, trabajo desigual</div>
+                            </div>
+                            <div class="after-box">
+                                <div class="box-label">Despues</div>
+                                <div class="box-icon">🤝</div>
+                                <div class="box-text">Sinergia, roles claros, exito compartido</div>
+                            </div>
+                        </div>
+                        <div class="checklist">
+                            <div class="checklist-title">
+                                <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                                    <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                </svg>
+                                Cambios clave
+                            </div>
+                            <div class="checklist-item">
+                                <span class="checklist-icon">✓</span>
+                                <span>Define roles y responsabilidades desde el inicio</span>
+                            </div>
+                            <div class="checklist-item">
+                                <span class="checklist-icon">✓</span>
+                                <span>Usa herramientas colaborativas (Trello, Notion)</span>
+                            </div>
+                            <div class="checklist-item">
+                                <span class="checklist-icon">✓</span>
+                                <span>Reuniones cortas y con agenda clara</span>
+                            </div>
+                        </div>
+                        <div class="tips-container">
+                            <div class="tip-box tip-error">
+                                <span class="tip-label">Error comun</span>
+                                Hacer todo solo porque "es mas rapido"
+                            </div>
+                            <div class="tip-box tip-success">
+                                <span class="tip-label">Que hacer</span>
+                                Delegar, confiar y dar feedback constructivo
+                            </div>
+                        </div>
+
+                        <button class="btn-ver-mas" onclick="toggleExpand(4)">
+                            <span>Ver mas informacion</span>
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+
+                        <div class="contenido-expandido" id="expand-4">
+                            <div class="caso-estudio">
+                                <div class="caso-titulo">
+                                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
+                                    </svg>
+                                    Caso Real: Grupo de Base de Datos, 2do semestre
+                                </div>
+                                <div class="caso-contenido">
+                                    <div class="caso-personaje">Un grupo de 5 estudiantes debia entregar un sistema de gestion de biblioteca.</div>
+                                    <div class="caso-problema"><strong>Problema:</strong> Todos querian programar, nadie queria documentar. No habia lider claro. A 3 dias de la entrega, tenian 3 versiones diferentes del codigo que no se podian unir. Dos miembros no habian hecho nada. Discusiones por WhatsApp a las 2am.</div>
+                                    <div class="caso-solucion"><strong>Solucion:</strong> Crearon un tablero Trello con tareas especificas. Asignaron roles: 1 lider/integrador, 2 backend, 1 frontend, 1 documentacion/testing. Reuniones de 15 min por Discord cada 2 dias. Usaron GitHub para versionar. Entregaron a tiempo con nota 18.</div>
+                                </div>
+                            </div>
+                            <div class="tecnicas-detalladas">
+                                <div class="tecnicas-titulo">
+                                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/>
+                                    </svg>
+                                    Tecnicas Avanzadas
+                                </div>
+                                <div class="tecnica-item">
+                                    <div class="tecnica-nombre">Metodologia SCRUM Simplificada</div>
+                                    <div class="tecnica-descripcion">Sprint de 1 semana. Lunes: planificacion (que haremos). Miercoles: revision rapida (como vamos). Domingo: entrega parcial + retrospectiva (que mejorar). Usa un tablero con: Por hacer, En progreso, Revision, Hecho.</div>
+                                </div>
+                                <div class="tecnica-item">
+                                    <div class="tecnica-nombre">Reunion Daily de 15 min</div>
+                                    <div class="tecnica-descripcion">Cada quien responde 3 preguntas: 1) Que hice ayer? 2) Que hare hoy? 3) Tengo algun bloqueo? Sin discusiones largas, solo actualizacion. Los problemas se resuelven despues con los involucrados.</div>
+                                </div>
+                                <div class="tecnica-item">
+                                    <div class="tecnica-nombre">Feedback Sandwich</div>
+                                    <div class="tecnica-descripcion">Para dar retroalimentacion sin conflicto: 1) Algo positivo genuino. 2) El area de mejora especifica. 3) Confianza en que puede mejorar. Ejemplo: "Tu codigo funciona bien y es creativo. Seria mas facil de leer con mas comentarios. Se que puedes hacerlo porque eres detallista."</div>
+                                </div>
+                            </div>
+                            <div class="recursos-adicionales">
+                                <div class="recursos-titulo">Herramientas Recomendadas</div>
+                                <a href="https://trello.com" target="_blank" class="recurso-link">
+                                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"/></svg>
+                                    Trello - Tableros Kanban gratuitos
+                                </a>
+                                <a href="https://github.com" target="_blank" class="recurso-link">
+                                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"/></svg>
+                                    GitHub - Control de versiones colaborativo
+                                </a>
+                                <a href="https://discord.com" target="_blank" class="recurso-link">
+                                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"/></svg>
+                                    Discord - Comunicacion en tiempo real
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer-infographic">
+                        <div class="completion-badge" id="badge-4">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span>5 min de lectura</span>
+                        </div>
+                        <button class="btn-mark-complete" id="btn-4" onclick="marcarCompletado(4)">Completar</button>
+                    </div>
+                </div>
+                <div class="locked-overlay">
+                    <div class="locked-icon">🔒</div>
+                    <div class="locked-text">Completa la etapa anterior</div>
+                </div>
+            </div>
+
+            <!-- Etapa 5: Manejo del Estres -->
+            <div class="timeline-card" data-etapa="5">
+                <div class="timeline-dot"></div>
+                <div class="infographic-card" style="--card-color-1: #10b981; --card-color-2: #059669;">
+                    <div class="card-header-infographic">
+                        <div class="etapa-badge">
+                            <svg width="12" height="12" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
+                            </svg>
+                            Etapa 5
+                        </div>
+                        <h3 class="card-title-infographic">Manejo del Estres</h3>
+                        <p class="card-subtitle-infographic">Cuida tu bienestar mental</p>
+                    </div>
+                    <div class="card-body-infographic">
+                        <div class="before-after">
+                            <div class="before-box">
+                                <div class="box-label">Antes</div>
+                                <div class="box-icon">😩</div>
+                                <div class="box-text">Ansiedad, burnout, insomnio</div>
+                            </div>
+                            <div class="after-box">
+                                <div class="box-label">Despues</div>
+                                <div class="box-icon">🧘</div>
+                                <div class="box-text">Equilibrio, resiliencia, energia</div>
+                            </div>
+                        </div>
+                        <div class="checklist">
+                            <div class="checklist-title">
+                                <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                                    <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                </svg>
+                                Cambios clave
+                            </div>
+                            <div class="checklist-item">
+                                <span class="checklist-icon">✓</span>
+                                <span>Duerme 7-8 horas (no es negociable)</span>
+                            </div>
+                            <div class="checklist-item">
+                                <span class="checklist-icon">✓</span>
+                                <span>Practica respiracion profunda 5 min/dia</span>
+                            </div>
+                            <div class="checklist-item">
+                                <span class="checklist-icon">✓</span>
+                                <span>Desconectate: tiempo sin pantallas</span>
+                            </div>
+                        </div>
+                        <div class="tips-container">
+                            <div class="tip-box tip-error">
+                                <span class="tip-label">Error comun</span>
+                                Sacrificar sueno para estudiar mas
+                            </div>
+                            <div class="tip-box tip-success">
+                                <span class="tip-label">Que hacer</span>
+                                Descansar bien mejora la memoria y concentracion
+                            </div>
+                        </div>
+
+                        <button class="btn-ver-mas" onclick="toggleExpand(5)">
+                            <span>Ver mas informacion</span>
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+
+                        <div class="contenido-expandido" id="expand-5">
+                            <div class="caso-estudio">
+                                <div class="caso-titulo">
+                                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
+                                    </svg>
+                                    Caso Real: Ana, 3er semestre
+                                </div>
+                                <div class="caso-contenido">
+                                    <div class="caso-personaje">Ana era la tipica estudiante "10/10" que queria ser perfecta en todo.</div>
+                                    <div class="caso-problema"><strong>Problema:</strong> Dormia 4-5 horas, tomaba 3 cafes diarios, no hacia ejercicio. En semana de parciales, tuvo un ataque de panico en pleno examen. Tuvo que salir y no pudo terminarlo. El medico le diagnostico estres cronico y ansiedad.</div>
+                                    <div class="caso-solucion"><strong>Solucion:</strong> Empezo terapia y aprendio tecnicas de respiracion 4-7-8 (inhala 4s, sostiene 7s, exhala 8s). Se puso un limite: no estudiar despues de las 10pm. Camino 20 min diarios. Acepto que un 16 tambien es buena nota. Su rendimiento mejoro y se siente mas tranquila.</div>
+                                </div>
+                            </div>
+                            <div class="tecnicas-detalladas">
+                                <div class="tecnicas-titulo">
+                                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/>
+                                    </svg>
+                                    Tecnicas Avanzadas
+                                </div>
+                                <div class="tecnica-item">
+                                    <div class="tecnica-nombre">Respiracion 4-7-8</div>
+                                    <div class="tecnica-descripcion">Inhala por la nariz contando hasta 4. Sostiene la respiracion contando hasta 7. Exhala por la boca contando hasta 8. Repite 4 veces. Activa el sistema nervioso parasimpatico y reduce el cortisol. Ideal antes de examenes o presentaciones.</div>
+                                </div>
+                                <div class="tecnica-item">
+                                    <div class="tecnica-nombre">Regla 20-20-20 para Pantallas</div>
+                                    <div class="tecnica-descripcion">Cada 20 minutos, mira algo a 20 pies (6 metros) de distancia por 20 segundos. Reduce fatiga visual y dolores de cabeza. Combina con levantarte y estirarte cada hora.</div>
+                                </div>
+                                <div class="tecnica-item">
+                                    <div class="tecnica-nombre">Higiene del Sueno para Estudiantes</div>
+                                    <div class="tecnica-descripcion">No pantallas 1 hora antes de dormir (luz azul = menos melatonina). Temperatura fresca (18-20°C). Horario fijo incluso fines de semana. Nada de cafeina despues de las 2pm. Tu cerebro consolida lo aprendido mientras duermes.</div>
+                                </div>
+                            </div>
+                            <div class="recursos-adicionales">
+                                <div class="recursos-titulo">Herramientas Recomendadas</div>
+                                <a href="https://www.headspace.com" target="_blank" class="recurso-link">
+                                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"/></svg>
+                                    Headspace - Meditaciones guiadas
+                                </a>
+                                <a href="https://www.sleepfoundation.org" target="_blank" class="recurso-link">
+                                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"/></svg>
+                                    Sleep Foundation - Guias de sueno
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer-infographic">
+                        <div class="completion-badge" id="badge-5">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span>5 min de lectura</span>
+                        </div>
+                        <button class="btn-mark-complete" id="btn-5" onclick="marcarCompletado(5)">Completar</button>
+                    </div>
+                </div>
+                <div class="locked-overlay">
+                    <div class="locked-icon">🔒</div>
+                    <div class="locked-text">Completa la etapa anterior</div>
+                </div>
+            </div>
+
+            <!-- Etapa 6: Vision y Metas -->
+            <div class="timeline-card" data-etapa="6">
+                <div class="timeline-dot"></div>
+                <div class="infographic-card" style="--card-color-1: #6366f1; --card-color-2: #4f46e5;">
+                    <div class="card-header-infographic">
+                        <div class="etapa-badge">
+                            <svg width="12" height="12" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
+                            Etapa 6
+                        </div>
+                        <h3 class="card-title-infographic">Vision y Metas</h3>
+                        <p class="card-subtitle-infographic">Define tu futuro profesional</p>
+                    </div>
+                    <div class="card-body-infographic">
+                        <div class="before-after">
+                            <div class="before-box">
+                                <div class="box-label">Antes</div>
+                                <div class="box-icon">🤷</div>
+                                <div class="box-text">Sin direccion, duda constante</div>
+                            </div>
+                            <div class="after-box">
+                                <div class="box-label">Despues</div>
+                                <div class="box-icon">🎯</div>
+                                <div class="box-text">Proposito claro, motivacion genuina</div>
+                            </div>
+                        </div>
+                        <div class="checklist">
+                            <div class="checklist-title">
+                                <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                                    <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                </svg>
+                                Cambios clave
+                            </div>
+                            <div class="checklist-item">
+                                <span class="checklist-icon">✓</span>
+                                <span>Usa metas SMART (especificas, medibles...)</span>
+                            </div>
+                            <div class="checklist-item">
+                                <span class="checklist-icon">✓</span>
+                                <span>Crea un vision board de tu carrera</span>
+                            </div>
+                            <div class="checklist-item">
+                                <span class="checklist-icon">✓</span>
+                                <span>Revisa y ajusta metas cada trimestre</span>
+                            </div>
+                        </div>
+                        <div class="tips-container">
+                            <div class="tip-box tip-error">
+                                <span class="tip-label">Error comun</span>
+                                Metas vagas como "ser exitoso" sin plan concreto
+                            </div>
+                            <div class="tip-box tip-success">
+                                <span class="tip-label">Que hacer</span>
+                                Define que significa exito PARA TI y crea un roadmap
+                            </div>
+                        </div>
+
+                        <button class="btn-ver-mas" onclick="toggleExpand(6)">
+                            <span>Ver mas informacion</span>
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+
+                        <div class="contenido-expandido" id="expand-6">
+                            <div class="caso-estudio">
+                                <div class="caso-titulo">
+                                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
+                                    </svg>
+                                    Caso Real: Diego, empezando 3er semestre
+                                </div>
+                                <div class="caso-contenido">
+                                    <div class="caso-personaje">Diego no sabia si queria ser desarrollador, analista de datos o emprendedor.</div>
+                                    <div class="caso-problema"><strong>Problema:</strong> Estudiaba todo a medias porque "todo le interesaba". No tenia un proyecto personal ni un portafolio. Cuando le preguntaban "que quieres hacer cuando te gradues?" se quedaba en blanco. Sentia que perdia el tiempo sin un rumbo claro.</div>
+                                    <div class="caso-solucion"><strong>Solucion:</strong> Hizo un ejercicio de vision: se imagino en 5 anos y escribio un "dia perfecto" detallado. Descubrio que queria trabajar remoto en startups tech. Definio 3 metas SMART: 1) Terminar un curso de React en 2 meses. 2) Crear 3 proyectos para su portafolio en 6 meses. 3) Conseguir una pasantia antes de acabar 4to semestre.</div>
+                                </div>
+                            </div>
+                            <div class="tecnicas-detalladas">
+                                <div class="tecnicas-titulo">
+                                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/>
+                                    </svg>
+                                    Tecnicas Avanzadas
+                                </div>
+                                <div class="tecnica-item">
+                                    <div class="tecnica-nombre">Metas SMART para Estudiantes</div>
+                                    <div class="tecnica-descripcion">Especifica: "Aprender React" → "Completar el curso de React de freeCodeCamp". Medible: Con certificado al final. Alcanzable: 1-2 horas diarias es realista. Relevante: Necesario para el mercado laboral. Temporal: En 8 semanas.</div>
+                                </div>
+                                <div class="tecnica-item">
+                                    <div class="tecnica-nombre">Ejercicio "Dia Perfecto en 5 Anos"</div>
+                                    <div class="tecnica-descripcion">Escribe con detalle como seria tu dia ideal en 5 anos: Donde vives? En que trabajas? Con quien? Que haces en tu tiempo libre? Cuanto ganas? Esto revela tus verdaderas prioridades mas que preguntarte "que quiero ser".</div>
+                                </div>
+                                <div class="tecnica-item">
+                                    <div class="tecnica-nombre">Roadmap de Carrera Tech</div>
+                                    <div class="tecnica-descripcion">Semestres 1-2: Fundamentos solidos (algoritmos, POO, bases de datos). Semestres 3-4: Especializacion (web, mobile, data, IA). Semestres 5-6: Proyectos reales y pasantias. Semestre 7+: Networking y preparacion laboral. Cada semestre = 1-2 proyectos para tu portafolio.</div>
+                                </div>
+                            </div>
+                            <div class="recursos-adicionales">
+                                <div class="recursos-titulo">Herramientas Recomendadas</div>
+                                <a href="https://roadmap.sh" target="_blank" class="recurso-link">
+                                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"/></svg>
+                                    roadmap.sh - Rutas de aprendizaje tech
+                                </a>
+                                <a href="https://www.linkedin.com" target="_blank" class="recurso-link">
+                                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"/></svg>
+                                    LinkedIn - Networking profesional
+                                </a>
+                                <a href="https://github.com" target="_blank" class="recurso-link">
+                                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"/></svg>
+                                    GitHub - Tu portafolio de codigo
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer-infographic">
+                        <div class="completion-badge" id="badge-6">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span>5 min de lectura</span>
+                        </div>
+                        <button class="btn-mark-complete" id="btn-6" onclick="marcarCompletado(6)">Completar</button>
+                    </div>
+                </div>
+                <div class="locked-overlay">
+                    <div class="locked-icon">🔒</div>
+                    <div class="locked-text">Completa la etapa anterior</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Final section -->
+        <section class="final-section" id="finalSection" style="display: none;">
+            <div class="final-icon">🎉</div>
+            <h2 class="final-title">Felicidades, has completado tu camino!</h2>
+            <p class="final-text">
+                Has recorrido todas las etapas de crecimiento personal. Ahora tienes las herramientas 
+                para ser un estudiante universitario exitoso. Recuerda: el aprendizaje nunca termina. 
+                Sigue aplicando estos principios cada dia!
+            </p>
+        </section>
+    </main>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        <span id="toastMessage">Etapa completada!</span>
+    </div>
+
+    <script>
+        // Supabase config
+        const SUPABASE_URL = 'https://cuanxvisilnzqkwatgou.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1YW54dmlzaWxuenFrd2F0Z291Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwOTQ0MDEsImV4cCI6MjA3OTY3MDQwMX0.EkoyQjv6tgPG_eJER4MS7gjvKju_sl6YiS-lvzkTqhY';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const TOTAL_ETAPAS = 6;
+        let etapasCompletadas = new Set();
+        let allUnlocked = false;
+        let currentUser = null;
+
+        function toggleExpand(etapa) {
+            const contenido = document.getElementById('expand-' + etapa);
+            const btn = contenido.previousElementSibling;
+            
+            if (contenido.classList.contains('visible')) {
+                contenido.classList.remove('visible');
+                btn.classList.remove('expanded');
+                btn.querySelector('span').textContent = 'Ver mas informacion';
+            } else {
+                contenido.classList.add('visible');
+                btn.classList.add('expanded');
+                btn.querySelector('span').textContent = 'Ver menos';
+            }
+        }
+
+        // Inicializacion
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Verificar sesion
+            const userData = localStorage.getItem('fishub_user');
+            if (userData) {
+                currentUser = JSON.parse(userData);
+            }
+            
+            await cargarProgreso();
+            initScrollAnimation();
+            actualizarUI();
+        });
+
+        // Cargar progreso desde Supabase
+        async function cargarProgreso() {
+            if (!currentUser) return;
+
+            try {
+                const { data, error } = await supabase
+                    .from('progreso_crecimiento')
+                    .select('etapa_completada')
+                    .eq('usuario_id', currentUser.id);
+
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                    data.forEach(item => {
+                        etapasCompletadas.add(item.etapa_completada);
+                    });
+                }
+
+                // Si completo todas, desbloquear todo
+                if (etapasCompletadas.size === TOTAL_ETAPAS) {
+                    allUnlocked = true;
+                }
+            } catch (err) {
+                console.error('Error cargando progreso:', err);
+            }
+        }
+
+        // Guardar progreso en Supabase
+        async function guardarProgreso(etapa) {
+            if (!currentUser) {
+                showToast('Inicia sesion para guardar tu progreso');
+                return;
+            }
+
+            try {
+                const { error } = await supabase
+                    .from('progreso_crecimiento')
+                    .insert({
+                        usuario_id: currentUser.id,
+                        etapa_completada: etapa
+                    });
+
+                if (error && error.code !== '23505') throw error; // Ignorar duplicados
+            } catch (err) {
+                console.error('Error guardando progreso:', err);
+            }
+        }
+
+        // Marcar etapa como completada
+        async function marcarCompletado(etapa) {
+            if (etapasCompletadas.has(etapa)) return;
+
+            // Verificar que la etapa anterior este completada (excepto etapa 1)
+            if (etapa > 1 && !etapasCompletadas.has(etapa - 1) && !allUnlocked) {
+                showToast('Completa la etapa anterior primero');
+                return;
+            }
+
+            etapasCompletadas.add(etapa);
+            await guardarProgreso(etapa);
+            actualizarUI();
+            showToast('Etapa ' + etapa + ' completada!');
+
+            // Verificar si completo todo
+            if (etapasCompletadas.size === TOTAL_ETAPAS) {
+                allUnlocked = true;
+                document.getElementById('finalSection').style.display = 'block';
+                document.getElementById('finalSection').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // Actualizar toda la UI
+        function actualizarUI() {
+            const cards = document.querySelectorAll('.timeline-card');
+            
+            cards.forEach(card => {
+                const etapa = parseInt(card.dataset.etapa);
+                const isCompleted = etapasCompletadas.has(etapa);
+                const isUnlocked = allUnlocked || etapa === 1 || etapasCompletadas.has(etapa - 1);
+
+                // Estado completado
+                if (isCompleted) {
+                    card.classList.add('completed');
+                    card.classList.remove('locked');
+                    const btn = document.getElementById('btn-' + etapa);
+                    if (btn) {
+                        btn.textContent = 'Completado';
+                        btn.classList.add('completed');
+                    }
+                    const badge = document.getElementById('badge-' + etapa);
+                    if (badge) {
+                        badge.classList.add('done');
+                        badge.innerHTML = `
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <span>Completado</span>
+                        `;
+                    }
+                } else if (isUnlocked) {
+                    card.classList.remove('locked');
+                } else {
+                    card.classList.add('locked');
+                }
+            });
+
+            // Actualizar estadisticas
+            document.getElementById('etapasCompletadas').textContent = etapasCompletadas.size;
+            const porcentaje = Math.round((etapasCompletadas.size / TOTAL_ETAPAS) * 100);
+            document.getElementById('porcentajeProgreso').textContent = porcentaje + '%';
+            document.getElementById('progressBarFill').style.width = porcentaje + '%';
+
+            // Boton desbloquear
+            const btnUnlock = document.getElementById('btnUnlock');
+            const unlockText = document.getElementById('unlockText');
+            if (allUnlocked) {
+                btnUnlock.classList.add('completed');
+                unlockText.textContent = 'Todo desbloqueado';
+            }
+
+            // Mostrar seccion final si completo todo
+            if (etapasCompletadas.size === TOTAL_ETAPAS) {
+                document.getElementById('finalSection').style.display = 'block';
+            }
+        }
+
+        // Toggle desbloquear todo
+        async function toggleUnlockAll() {
+            if (allUnlocked) return;
+
+            allUnlocked = true;
+            
+            // Guardar todas las etapas
+            for (let i = 1; i <= TOTAL_ETAPAS; i++) {
+                if (!etapasCompletadas.has(i)) {
+                    etapasCompletadas.add(i);
+                    await guardarProgreso(i);
+                }
+            }
+
+            actualizarUI();
+            
+            // Mostrar todas las cards
+            document.querySelectorAll('.timeline-card').forEach(card => {
+                card.classList.add('visible', 'unlocked');
+                card.classList.remove('locked');
+            });
+
+            showToast('Todas las etapas desbloqueadas!');
+        }
+
+        // Animacion de scroll
+        function initScrollAnimation() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const card = entry.target;
+                        const etapa = parseInt(card.dataset.etapa);
+                        const isUnlocked = allUnlocked || etapa === 1 || etapasCompletadas.has(etapa - 1) || etapasCompletadas.has(etapa);
+                        
+                        if (isUnlocked || allUnlocked) {
+                            card.classList.add('visible');
+                        }
+                    }
+                });
+            }, {
+                threshold: 0.2,
+                rootMargin: '0px 0px -50px 0px'
+            });
+
+            document.querySelectorAll('.timeline-card').forEach(card => {
+                observer.observe(card);
+            });
+        }
+
+        // Mostrar toast
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').textContent = message;
+            toast.classList.add('show', 'success');
+            setTimeout(() => {
+                toast.classList.remove('show', 'success');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
