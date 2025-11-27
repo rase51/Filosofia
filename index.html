@@ -1831,22 +1831,6 @@
                         <li><a href="#cursos">Crecimiento Personal</a></li>
                     </ul>
                 </div>
-                <div class="footer-links">
-                    <h4>Recursos</h4>
-                    <ul>
-                        <li><a href="#">Guia de Uso</a></li>
-                        <li><a href="#">FAQ</a></li>
-                        <li><a href="#">Soporte</a></li>
-                    </ul>
-                </div>
-                <div class="footer-links">
-                    <h4>Contacto</h4>
-                    <ul>
-                        <li><a href="mailto:fishub@uncp.edu.pe">fishub@uncp.edu.pe</a></li>
-                        <li><a href="#">Facebook</a></li>
-                        <li><a href="#">WhatsApp</a></li>
-                    </ul>
-                </div>
             </div>
             <div class="footer-bottom">
                 <p>2025 Fishub - Facultad de Ingenieria de Sistemas UNCP</p>
@@ -2477,51 +2461,6 @@
             }
         }
 
-        // Renderizar biblioteca
-        // function renderBiblioteca(categoria) {
-        //     const filtrados = categoria === 'all' ? bibliotecaData : bibliotecaData.filter(r => r.categoria === categoria);
-        //     renderBibliotecaFiltrada(filtrados);
-        // }
-
-        // function renderBibliotecaFiltrada(recursos) {
-        //     const grid = document.getElementById('bibliotecaGrid');
-            
-        //     if (recursos.length === 0) {
-        //         grid.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;"><p>No se encontraron recursos</p></div>';
-        //         return;
-        //     }
-
-        //     grid.innerHTML = recursos.map(recurso => `
-        //         <div class="resource-card">
-        //             <div class="card-header">
-        //                 <span class="card-badge">${recurso.categoria.toUpperCase()}</span>
-        //                 <h3 class="card-title">${recurso.titulo}</h3>
-        //                 <p class="card-subtitle">${recurso.autor}</p>
-        //             </div>
-        //             <div class="card-body">
-        //                 <div class="card-info">
-        //                     <div class="info-item">
-        //                         <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        //                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-        //                         </svg>
-        //                         <span>${recurso.tipo} - ${recurso.tamano}</span>
-        //                     </div>
-        //                     <div class="info-item">
-        //                         <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        //                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-        //                         </svg>
-        //                         <span>${recurso.descargas} descargas</span>
-        //                     </div>
-        //                 </div>
-        //                 <p class="card-description">${recurso.descripcion}</p>
-        //             </div>
-        //             <div class="card-footer">
-        //                 <button class="btn-card btn-download" onclick="showToast('Descarga iniciada', 'success')">Descargar</button>
-        //                 <button class="btn-card btn-info" onclick="showToast('Vista previa no disponible', 'error')">Ver</button>
-        //             </div>
-        //         </div>
-        //     `).join('');
-        // }
 
         // Renderizar cursos
         async function cargarRecursos() {
