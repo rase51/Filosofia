@@ -108,11 +108,17 @@
             align-items: center;
             gap: 6px;
             background: linear-gradient(135deg, var(--warning), #f97316);
-            color: white;
+            /* Resetear propiedades heredadas del h1 para que el texto blanco se vea */
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
+            -webkit-background-clip: padding-box !important;
+            background-clip: padding-box !important;
             padding: 4px 12px;
             border-radius: 20px;
             font-size: 11px;
-            font-weight: 600;
+            font-weight: 700;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            letter-spacing: 0.5px;
         }
 
         .header-right {
@@ -663,6 +669,75 @@
             background: rgba(59, 130, 246, 0.2);
         }
 
+        /* Agregando estilos para botones de modales */
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn-cancel {
+            flex: 1;
+            padding: 14px 24px;
+            background: rgba(100, 116, 139, 0.2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-cancel:hover {
+            background: rgba(100, 116, 139, 0.3);
+            color: var(--text);
+        }
+
+        .btn-confirm {
+            flex: 1;
+            padding: 14px 24px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-confirm:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .or-separator {
+            text-align: center;
+            margin: 20px 0;
+            color: var(--text-muted);
+            position: relative;
+        }
+
+        .or-separator::before,
+        .or-separator::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 40%;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .or-separator::before {
+            left: 0;
+        }
+
+        .or-separator::after {
+            right: 0;
+        }
+
         /* Anuncios */
         .announcement-card {
             padding: 20px;
@@ -787,10 +862,25 @@
             font-size: 14px;
             margin-bottom: 15px;
             display: none;
+            align-items: center;
+            gap: 10px;
         }
 
         .file-selected.active {
-            display: block;
+            display: flex;
+        }
+        
+        .file-selected-name {
+            font-weight: 600;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .file-selected-size {
+            color: var(--text-muted);
+            font-size: 12px;
         }
 
         /* Progress upload */
@@ -910,6 +1000,28 @@
             height: 60px;
             margin-bottom: 15px;
             color: var(--text-muted);
+        }
+
+        /* Loading Spinner */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid var(--primary);
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         /* Responsive */
@@ -1390,11 +1502,11 @@
             headerActions.innerHTML = `
                 <button class="btn btn-secondary" onclick="compartirGrupo()">
                     <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684y0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
                     </svg>
                     Compartir
                 </button>
-                ${!esCreador ? `<button class="btn btn-danger" onclick="salirDelGrupo()">Salir del Grupo</button>` : ''}
+                ${!esCreador ? `<button class="btn btn-danger" onclick=" salirDelGrupo()">Salir del Grupo</button>` : ''}
             `;
 
             // Botones de acciones para creador
@@ -1548,8 +1660,8 @@
             container.innerHTML = html || `
                 <div class="empty-state">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18 18v3a1 1 0 001 1h1M6 18v3a1 1 0 001 1h1M4 16a1 1 0 011-1V5a1 1 0 011-1h10a1 1 0 011 1v11a1 1 0 01-1 1H6a1 1 0 01-1-1z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 10h4m-2-2v4"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M18 18v3a1 1 0 001 1h1M6 18v3a1 1 0 001 1h1M4 16a1 1 0 011-1V5a1 1 0 011-1h10a1 1 0 011 1v11a1 1 0 01-1 1H6a1 1 0 01-1-1z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M10 10h4m-2-2v4"/>
                     </svg>
                     <p>Sin participantes registrados</p>
                 </div>
@@ -1592,8 +1704,7 @@
                     <tr>
                         <td colspan="${esCreador ? 5 : 5}" class="empty-state">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 9.75l3 3 3-3"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                             </svg>
                             <p>No hay horarios definidos</p>
                             ${esCreador ? '<p style="font-size:13px;margin-top:8px;">Haz clic en "+ Agregar" para crear un horario</p>' : ''}
@@ -1672,10 +1783,18 @@
                 default: '📁'
             };
 
+            const iconosClases = {
+                pdf: 'icon-pdf',
+                video: 'icon-video',
+                doc: 'icon-doc',
+                link: 'icon-link',
+                default: 'icon-default'
+            };
+
             container.innerHTML = materiales.map(m => `
                 <div class="material-card">
                     <div class="material-header">
-                        <div class="material-icon ${iconos[m.tipo] || 'icon-default'}">${iconosSvg[m.tipo] || iconosSvg['default']}</div>
+                        <div class="material-icon ${iconosClases[m.tipo] || iconosClases['default']}">${iconosSvg[m.tipo] || iconosSvg['default']}</div>
                         <div class="material-info">
                             <h4 class="material-title">${m.nombre}</h4>
                             <p class="material-type">${m.tipo.toUpperCase()}${m.tamano ? ' • ' + m.tamano : ''}</p>
